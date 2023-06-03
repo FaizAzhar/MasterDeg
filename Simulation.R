@@ -3,7 +3,6 @@ library(cubature) # to perform integration
 library(VineCopula) # to calculate copula CDF
 library(MASS) # for simulation of Bivariate Normal
 library(DescTools) # to use trapezoid rule for AUC calculation
-library(psych)
 
 #=================================================
 #  Function to compute sensitivity and specificity 
@@ -76,6 +75,13 @@ joint.mod1 <- function(z,pars) return(z[1]*pars[1]*exp(-(z[1]*pars[1]*z[2]))*par
 # xi=marker measurement, ti=time, 
 # ui=quantile of marker, vi=quantile of time
 
+cop.mod.ll <- function(par,Ui,Vi,ui,vi){
+  # par[1] = theta
+  n <- length(Ui)
+  logll <- n*log(1+par[1])-(2+1/par[1])*(sum(log((1-Ui)**(-par[1])+Vi**(-par[1])-1)))-(par[1]+1)*(sum(log((1-Ui)*Vi)))-sum(log(ui))+sum(log(vi))
+  return(-logll)
+}
+
 #    expo-expo
 haz.mod1.ll <- function(xi,ti,par){
   # par[1] = beta, par[2] = mu
@@ -131,7 +137,7 @@ haz.mod3.ll <- function(par,xi,ti){
 marg.mod3T.ll <- function(ti,par){
   # par[1] = lambda, par[2] = gamma
   n <- length(ti)
-  logll <- n*par[2]*log(par[1])+n*log(par[2])+(par[2]-1)*sum(log(ti))-par[1]**par[2]*sum((ti)**par[2])
+  logll <- n*log(par[1]*par[2])+(par[2]-1)*sum(log(ti*par[1]))-sum((ti*par[1])**par[2])
   return(-logll)
 }
 
@@ -156,9 +162,7 @@ sim.run <- function(nrun, sample_size=100, mu, sigma){
   
   for(run in 1:nrun){
     boot.data <- sim.data[sample(nrow(sim.data), sample_size, replace=T), ]
-    tau <- TauMatrix(as.matrix(cbind(pobs(boot.data[,1]),boot.data[,2])))
-    cop.fit.par <- BiCopTau2Par(family=1,tau=tau[1,2])
-    
+
     # Fitting for expo-expo
     #     hazard function
     haz.mod1.fit.par <- optim(c(0.1,0.1),haz.mod1.ll, xi=boot.data[,1], ti=boot.data[,2], 
@@ -169,16 +173,22 @@ sim.run <- function(nrun, sample_size=100, mu, sigma){
     #     copula function
     marg.mod1X.fit.par <- optim(0.1, marg.mod1X.ll, xi=boot.data[,1],
                                 method='Brent',hessian=T,
-                                lower=0, upper=999)
+                                lower=0, upper=999) #stage 1 ~ MLE of marginals
     marg.mod1T.fit.par <- optim(0.1, marg.mod1T.ll, ti=boot.data[,2],
                                 method='Brent',hessian=T,
                                 lower=0, upper=999)
     marg.mod1.par <- c(marg.mod1X.fit.par$par,marg.mod1T.fit.par$par)
+    U.i <- pexp(boot.data[,1], rate=marg.mod1.par[1]) #stage 2 ~ use estimated marginal for MLE of copula
+    V.i <- pexp(boot.data[,2], rate=marg.mod1.par[2])
+    u.i <- dexp(boot.data[,1], rate=marg.mod1.par[1])
+    v.i <- dexp(boot.data[,2], rate=marg.mod1.par[2])
+    cop.mod1.fit.par <- optim(2, cop.mod.ll, Ui=U.i, Vi=V.i, ui=u.i, vi=v.i,
+                         hessian=T)
     
     #    storing all parameters for each run
     mod1.par.df <- rbind(mod1.par.df,c(haz.mod1.par[1],haz.mod1.par[2],
                                        marg.mod1.par[1],marg.mod1.par[2],
-                                       cop.fit.par[1]))
+                                       cop.mod1.fit.par[1]))
     
     # Fitting for normal-expo
     #     hazard function
@@ -190,39 +200,46 @@ sim.run <- function(nrun, sample_size=100, mu, sigma){
     #     copula function
     marg.mod2X.fit.par <- optim(rep(0.1,2), marg.mod2X.ll, xi=boot.data[,1],
                                 method='L-BFGS-B',hessian=T,
-                                lower=c(-999,0.1), upper=rep(999,2))
+                                lower=c(-999,0.1), upper=rep(999,2)) #stage 1 ~ MLE of marginals
     marg.mod2T.fit.par <- optim(0.1, marg.mod2T.ll, ti=boot.data[,2],
                                 method='Brent',hessian=T,
                                 lower=0, upper=999)
     marg.mod2.par <- c(marg.mod2X.fit.par$par,marg.mod2T.fit.par$par)
-
+    U.i <- pnorm(boot.data[,1], mean=marg.mod2.par[1], sd=marg.mod2.par[2]) #stage 2 ~ use estimated marginal for MLE of copula
+    V.i <- pexp(boot.data[,2], rate=marg.mod2.par[3])
+    u.i <- dnorm(boot.data[,1], mean=marg.mod2.par[1], sd=marg.mod2.par[2])
+    v.i <- dexp(boot.data[,2], rate=marg.mod2.par[3])
+    cop.mod2.fit.par <- optim(2, cop.mod.ll, Ui=U.i, Vi=V.i, ui=u.i, vi=v.i,
+                              hessian=T)
     #    storing all parameters for each run
     mod2.par.df <- rbind(mod2.par.df,c(haz.mod2.par[1],haz.mod2.par[2],haz.mod2.par[3],
                                        marg.mod2.par[1],marg.mod2.par[2],marg.mod2.par[3],
-                                       cop.fit.par[1]))
+                                       cop.mod2.fit.par[1]))
 
     # Fitting for normal-weibull
     #     hazard function
     haz.mod3.fit.par <- optim(rep(0.1,4),haz.mod3.ll, xi=boot.data[,1], ti=boot.data[,2],
                               hessian=T)
-                              # method='L-BFGS-B',
-                              # lower=c(0.1,0.1,-999,0.1), upper=rep(999,4))
     haz.mod3.par <- haz.mod3.fit.par$par
     
     #     copula function
     marg.mod3X.fit.par <- optim(rep(0.1,2), marg.mod3X.ll, xi=boot.data[,1],
                                 method='L-BFGS-B',hessian=T,
-                                lower=c(-999,0.1), upper=rep(999,2))
+                                lower=c(-999,0.1), upper=rep(999,2)) #stage 1 ~ MLE of marginals
     marg.mod3T.fit.par <- optim(rep(0.1,2), marg.mod3T.ll, ti=boot.data[,2],
                                 hessian=T)
-                                # method='L-BFGS-B',hessian=T,
-                                # lower=rep(0.1,2), upper=rep(999,2))
     marg.mod3.par <- c(marg.mod3X.fit.par$par,marg.mod3T.fit.par$par)
-
+    U.i <- pnorm(boot.data[,1], mean=marg.mod3.par[1], sd=marg.mod3.par[2]) #stage 2 ~ use estimated marginal for MLE of copula
+    V.i <- pweibull(boot.data[,2], scale=marg.mod3.par[3], shape=marg.mod3.par[4])
+    u.i <- dnorm(boot.data[,1], mean=marg.mod3.par[1], sd=marg.mod3.par[2])
+    v.i <- dweibull(boot.data[,2], scale=marg.mod3.par[3], shape=marg.mod3.par[4])
+    cop.mod3.fit.par <- optimize(cop.mod.ll, c(0.1,50),
+                                 Ui=U.i, Vi=V.i, ui=u.i, vi=v.i)
+    
     #    storing all parameters for each run
     mod3.par.df <- rbind(mod3.par.df,c(haz.mod3.par[1],haz.mod3.par[2],haz.mod3.par[3],haz.mod3.par[4],
                                        marg.mod3.par[1],marg.mod3.par[2],marg.mod3.par[3],marg.mod3.par[4],
-                                       cop.fit.par[1]))
+                                       cop.mod3.fit.par[1]))
   }
   
   colnames(mod1.par.df) <- c('haz.beta','haz.mu','marg.lambda1','marg.lambda2','cop.rho')
@@ -242,5 +259,4 @@ sim.run <- function(nrun, sample_size=100, mu, sigma){
   return(list('expo-expo'=mod1,'normal-expo'=mod2,'normal-weibull'=mod3))
 }
 
-sim.run(1000,sample_size=100,mu=c(5,10),sigma=matrix(c(1,-.9,-.9,1),ncol=2))
-
+sim.run(1,sample_size=100,mu=c(5,7),sigma=matrix(c(1,-.9,-.9,1),ncol=2))
