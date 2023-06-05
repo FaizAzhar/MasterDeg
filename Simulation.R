@@ -87,13 +87,12 @@ cop.mod1.ll <- function(pars,xi,ti){
   theta   <- exp(pars[1])
   mu    <- pars[2]
   lambda <- pars[3]
-#  gauss.cop <- BiCop(family=23, par=theta)
   f.X <- dexp(xi, rate=mu) #first stage ~ estimate marginal
   f.T <- dexp(ti, rate = lambda)
   F.X <- pexp(xi, rate=mu)
   F.T <- pexp(ti, rate = lambda)
   f.XT <- f.X*f.T*((1+theta)*((1-F.X)**(-theta)+F.T**(-theta)-1)**(-1/theta-2)*(F.T**(-theta-1))*((1-F.X)**(-theta-1))) #second stage ~ estimate copula 
-  logll <- sum(log(f.X*f.T*f.XT))
+  logll <- sum(log(f.XT))
   return(-logll)
 }
 
@@ -112,13 +111,12 @@ cop.mod2.ll <- function(pars,xi,ti){
   mu    <- pars[2]
   sigma <- pars[3]
   lambda <- pars[4]
-#  gauss.cop <- BiCop(family=23, par=theta)
   f.X <- dnorm(xi, mean = mu, sd=sigma) #first stage ~ estimate marginal
   f.T <- dexp(ti, rate = lambda)
   F.X <- pnorm(xi, mean = mu, sd=sigma)
   F.T <- pexp(ti, rate = lambda)
   f.XT <- f.X*f.T*((1+theta)*((1-F.X)**(-theta)+F.T**(-theta)-1)**(-1/theta-2)*(F.T**(-theta-1))*((1-F.X)**(-theta-1))) #second stage ~ estimate copula 
-  logll <- sum(log(f.X*f.T*f.XT))
+  logll <- sum(log(f.XT))
   return(-logll)
 }
 
@@ -139,13 +137,12 @@ cop.mod3.ll <- function(pars,xi,ti){
   sigma <- pars[3]
   shape <- exp(pars[4])
   scale <- exp(pars[5])
-#  gauss.cop <- BiCop(family=23, par=theta)
   f.X <- dnorm(xi, mean = mu, sd=sigma) #first stage ~ estimate marginal
   f.T <- dweibull(ti, shape = shape, scale = scale)
   F.X <- pnorm(xi, mean = mu, sd=sigma)
   F.T <- pweibull(ti, shape = shape, scale = scale)
   f.XT <- f.X*f.T*((1+theta)*((1-F.X)**(-theta)+F.T**(-theta)-1)**(-1/theta-2)*(F.T**(-theta-1))*((1-F.X)**(-theta-1))) #second stage ~ estimate copula 
-  logll <- sum(log(f.X*f.T*f.XT))
+  logll <- sum(log(f.XT))
   return(-logll)
 }
 
@@ -155,7 +152,7 @@ cop.mod3.ll <- function(pars,xi,ti){
 
 sim.run <- function(nrun, sample_size=100, mu, sigma){
   
-  stime <- Sys.time()
+  stime <- proc.time()
   set.seed(24)
   sim.data <- as.data.frame(mvrnorm(n=sample_size, mu=mu, Sigma=sigma))
   mod1.par.df <- data.frame()
@@ -231,12 +228,9 @@ sim.run <- function(nrun, sample_size=100, mu, sigma){
   mod3 <- list('Fitted.par'=apply(mod3.par.df,2,mean),
                'CI.lower.upper'=apply(mod3.par.df,2,quantile, probs=c(0.05,0.95)),
                'S.Err'=sqrt(apply(mod3.par.df,2,var)))
-  print(paste0('Computation Time: ',Sys.time() - stime))
+  print(proc.time() - stime)
+  
   return(list('expo-expo'=mod1,'normal-expo'=mod2,'normal-weibull'=mod3))
 }
 
-sim.run(1000,sample_size=100,mu=c(5,7),sigma=matrix(c(1,-.9,-.9,1),ncol=2))
-BiCopPar2Tau(family=23,par=-28)
-BiCopPar2Tau(family=23,par=-0.66328454)
-BiCopPar2Tau(family=23,par=-1.82436328)
-BiCopPar2Tau(family=1,par=-0.9)
+sim.run(100,sample_size=100,mu=c(5,7),sigma=matrix(c(1,-.9,-.9,1),ncol=2))
