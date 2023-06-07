@@ -1,9 +1,10 @@
 library(survivalROC) # for PBC data
 library(cubature) # to perform integration
-library(VineCopula) # to calculate copula CDF
+library(copula) # to calculate copula CDF
 library(MASS) # for simulation of Bivariate Normal
 library(DescTools) # to use trapezoid rule for AUC calculation
-
+library(psych)
+library(dplyr)
 #=================================================
 #  Function to compute sensitivity and specificity 
 #  for method 1 (hazard function)
@@ -84,14 +85,16 @@ haz.mod1.ll <- function(xi,ti,par){
 }
 
 cop.mod1.ll <- function(pars,xi,ti){
-  theta   <- exp(pars[1])
-  mu    <- pars[2]
-  lambda <- pars[3]
+  theta <- pars[1]
+  mu    <- exp(-pars[2])
+  lambda <- exp(-pars[3])
+  rot.cop <- rotCopula(claytonCopula(theta),flip=c(F,T)) # rotated 90 degrees
   f.X <- dexp(xi, rate=mu) #first stage ~ estimate marginal
   f.T <- dexp(ti, rate = lambda)
   F.X <- pexp(xi, rate=mu)
   F.T <- pexp(ti, rate = lambda)
-  f.XT <- f.X*f.T*((1+theta)*((1-F.X)**(-theta)+F.T**(-theta)-1)**(-1/theta-2)*(F.T**(-theta-1))*((1-F.X)**(-theta-1))) #second stage ~ estimate copula 
+  f.XT <- dCopula(copula=rot.cop, cbind(F.X, F.T))
+#  f.XT <- f.X*f.T*((1+theta)*((1-F.X)**(-theta)+F.T**(-theta)-1)**(-1/theta-2)*(F.T**(-theta-1))*((1-F.X)**(-theta-1))) #second stage ~ estimate copula 
   logll <- sum(log(f.XT))
   return(-logll)
 }
@@ -107,15 +110,17 @@ haz.mod2.ll <- function(par,xi,ti){
 }
 
 cop.mod2.ll <- function(pars,xi,ti){
-  theta   <- exp(pars[1])
+  theta   <- pars[1]
   mu    <- pars[2]
   sigma <- pars[3]
-  lambda <- pars[4]
+  lambda <- exp(-pars[4])
+  rot.cop <- rotCopula(claytonCopula(theta),flip=c(F,T)) #rotated 90 degrees
   f.X <- dnorm(xi, mean = mu, sd=sigma) #first stage ~ estimate marginal
   f.T <- dexp(ti, rate = lambda)
   F.X <- pnorm(xi, mean = mu, sd=sigma)
   F.T <- pexp(ti, rate = lambda)
-  f.XT <- f.X*f.T*((1+theta)*((1-F.X)**(-theta)+F.T**(-theta)-1)**(-1/theta-2)*(F.T**(-theta-1))*((1-F.X)**(-theta-1))) #second stage ~ estimate copula 
+  f.XT <- f.X*f.T*dCopula(copula=rot.cop, cbind(F.X,F.T)) #second stage ~ estimate copula 
+  # f.XT <- f.X*f.T*((1+theta)*((1-F.X)**(-theta)+F.T**(-theta)-1)**(-1/theta-2)*(F.T**(-theta-1))*((1-F.X)**(-theta-1))) #second stage ~ estimate copula 
   logll <- sum(log(f.XT))
   return(-logll)
 }
@@ -124,113 +129,173 @@ cop.mod2.ll <- function(pars,xi,ti){
 haz.mod3.ll <- function(par,xi,ti){
   n <- length(xi)
   beta <- par[1]
-  gamma <- exp(par[2])
-  mu <- par[3]
-  sigma <- par[4]
+  mu <- par[2]
+  sigma <- par[3]
+  gamma <- exp(par[4])
   logll <- n*log(gamma)+(gamma-1)*sum(log(xi*ti))+n*gamma*log(beta)-beta**gamma*sum((xi*ti)**gamma)-(n/2)*log(sigma**2)-(1/(2*sigma**2))*sum((xi-mu)**2)
   return(-logll)
 }
 
 cop.mod3.ll <- function(pars,xi,ti){
-  theta   <- exp(pars[1])
+  theta   <- pars[1]
   mu    <- pars[2]
   sigma <- pars[3]
   shape <- exp(pars[4])
   scale <- exp(pars[5])
+  rot.cop <- rotCopula(claytonCopula(theta),flip=c(F,T)) #rotated 90 degrees
   f.X <- dnorm(xi, mean = mu, sd=sigma) #first stage ~ estimate marginal
   f.T <- dweibull(ti, shape = shape, scale = scale)
   F.X <- pnorm(xi, mean = mu, sd=sigma)
   F.T <- pweibull(ti, shape = shape, scale = scale)
-  f.XT <- f.X*f.T*((1+theta)*((1-F.X)**(-theta)+F.T**(-theta)-1)**(-1/theta-2)*(F.T**(-theta-1))*((1-F.X)**(-theta-1))) #second stage ~ estimate copula 
+  f.XT <- f.X*f.T*dCopula(copula=rot.cop,cbind(F.X,F.T)) #second stage ~ estimate copula 
+  # f.XT <- f.X*f.T*((1+theta)*((1-F.X)**(-theta)+F.T**(-theta)-1)**(-1/theta-2)*(F.T**(-theta-1))*((1-F.X)**(-theta-1))) #second stage ~ estimate copula 
   logll <- sum(log(f.XT))
   return(-logll)
+}
+
+# =================================================
+#  Function to run bootstrapping for each scenario
+# =================================================
+
+# expo-expo
+sim.mod1 <- function(nrun,sample_size,theta,lambda1,lambda2){
+  clay.cop <- rotCopula(archmCopula(family='clayton',dim=2, param=theta), flip=c(F,T))
+  mymvd <- mvdc(copula=clay.cop, margins=c('exp','exp'), 
+                paramMargins=list(rate=lambda1,rate=lambda2))
+  set.seed(123456)
+  sim.data <- as.data.frame(rMvdc(500, mymvd))
+  mod.par.df <- data.frame()
+  for(run in 1:nrun){
+    boot.data <- sim.data[sample(nrow(sim.data), sample_size, replace=T), ]
+    
+    # Fitting for expo-expo
+    #     hazard function
+    haz.mod.fit.par <- optim(c((sample_size/sum(boot.data[,1]*boot.data[,2])),(sample_size/sum(boot.data[,1]))),haz.mod1.ll,
+                              xi=boot.data[,1], ti=boot.data[,2])
+    haz.mod.par <- haz.mod.fit.par$par
+    
+    #     copula function
+    # cop.mod.fit.par <- optim(c(theta,(sample_size/sum(boot.data[,1])),(sample_size/sum(boot.data[,2]))), cop.mod1.ll,
+    #                           xi=boot.data[,1], ti=boot.data[,2]) 
+    cop.mod.fit.par <- optim(c(theta,-log(lambda1),-log(lambda2)), cop.mod1.ll,
+                             xi=boot.data[,1], ti=boot.data[,2]) 
+    #    storing all parameters for each run
+    mod.par.df <- rbind(mod.par.df,c(haz.mod.par[1],haz.mod.par[2],
+                                       cop.mod.fit.par$par[1],exp(-cop.mod.fit.par$par[2]),
+                                       exp(-cop.mod.fit.par$par[3])))
+  }
+  
+  colnames(mod.par.df) <- c('haz.beta','haz.lambda','cop.theta','marg.lambda1','marg.lambda2')
+  # calculating bootstrap S.E and CI
+  mod <- list('Fitted.par'=apply(mod.par.df,2,mean),
+               'CI.lower.upper'=apply(mod.par.df,2,quantile, probs=c(0.05,0.95)),
+               'S.Err'=sqrt(apply(mod.par.df,2,var)))
+  return(list('expo-expo'=mod))
+}
+
+#normal-expo
+sim.mod2 <- function(nrun,sample_size,theta,mu,sigma,lambda){
+  clay.cop <- rotCopula(archmCopula(family='clayton',dim=2, param=theta), flip=c(F,T))
+  mymvd <- mvdc(copula=clay.cop, margins=c('norm','exp'), 
+                paramMargins=list(list(mean=mu,sd=sigma),rate=lambda))
+  set.seed(10)
+  sim.data <- as.data.frame(rMvdc(500, mymvd))
+  mod.par.df <- data.frame()
+  for(run in 1:nrun){
+    boot.data <- sim.data[sample(nrow(sim.data), sample_size, replace=T), ]
+    
+    # Fitting for expo-expo
+    #     hazard function
+    haz.mod.fit.par <- optim(c((sample_size/sum(boot.data[,1]*boot.data[,2])),mean(boot.data[,1]),var(boot.data[,1])),haz.mod2.ll,
+                             xi=boot.data[,1], ti=boot.data[,2])
+    haz.mod.par <- haz.mod.fit.par$par
+    
+    #     copula function
+    cop.mod.fit.par <- optim(c(theta, mu,sigma,-log(lambda)), cop.mod2.ll,
+                             xi=boot.data[,1], ti=boot.data[,2]) 
+    
+    #    storing all parameters for each run
+    mod.par.df <- rbind(mod.par.df,c(haz.mod.par[1],haz.mod.par[2],haz.mod.par[3],
+                                     cop.mod.fit.par$par[1],cop.mod.fit.par$par[2],
+                                     cop.mod.fit.par$par[3],exp(-cop.mod.fit.par$par[4])))
+  }
+  
+  colnames(mod.par.df) <- c('haz.beta','haz.mu','haz.sigma','cop.theta','marg.mu','marg.sigma','marg.lambda')
+  # calculating bootstrap S.E and CI
+  mod <- list('Fitted.par'=apply(mod.par.df,2,mean),
+              'CI.lower.upper'=apply(mod.par.df,2,quantile, probs=c(0.05,0.95)),
+              'S.Err'=sqrt(apply(mod.par.df,2,var)))
+  return(list('normal-expo'=mod))
+}
+
+#normal-weibull
+sim.mod3 <- function(nrun,sample_size,theta,mu,sigma,shape,scale){
+  clay.cop <- rotCopula(archmCopula(family='clayton',dim=2, param=theta), flip=c(F,T))
+  mymvd <- mvdc(copula=clay.cop, margins=c('norm','weibull'), 
+                paramMargins=list(list(mean=mu,sd=sigma),list(shape=shape,scale=scale)))
+  set.seed(7)
+  sim.data <- as.data.frame(rMvdc(500, mymvd))
+  mod.par.df <- data.frame()
+  for(run in 1:nrun){
+    boot.data <- sim.data[sample(nrow(sim.data), sample_size, replace=T), ]
+    
+    # Fitting for expo-expo
+    #     hazard function
+    haz.mod.fit.par <- optim(c(.1,mu,sigma,shape),haz.mod3.ll,
+                             xi=boot.data[,1], ti=boot.data[,2])
+    haz.mod.par <- haz.mod.fit.par$par
+    
+    #     copula function
+    cop.mod.fit.par <- optim(c(log(theta),mu,sigma,log(shape),log(scale)), cop.mod3.ll,
+                             xi=boot.data[,1], ti=boot.data[,2]) 
+    
+    #    storing all parameters for each run
+    mod.par.df <- rbind(mod.par.df,c(haz.mod.par[1],haz.mod.par[2],haz.mod.par[3],haz.mod.par[4],
+                                     cop.mod.fit.par$par[1],cop.mod.fit.par$par[2],cop.mod.fit.par$par[3],
+                                     exp(cop.mod.fit.par$par[4]),exp(cop.mod.fit.par$par[5])))
+  }
+  
+  colnames(mod.par.df) <- c('haz.beta','haz.mu','haz.sigma','haz.shape','cop.theta','marg.mu','marg.sigma','marg.shape','marg.scale')
+  # calculating bootstrap S.E and CI
+  mod <- list('Fitted.par'=apply(mod.par.df,2,mean),
+              'CI.lower.upper'=apply(mod.par.df,2,quantile, probs=c(0.05,0.95)),
+              'S.Err'=sqrt(apply(mod.par.df,2,var)))
+  return(list('normal-weibull'=mod))
 }
 
 # =======================================
 #  Function for simulation
 # =======================================
 
-sim.run <- function(nrun, sample_size=100, mu, sigma){
+sim.run <- function(nrun, sample_size=100, sim,...){
   
   stime <- proc.time()
-  set.seed(24)
-  sim.data <- as.data.frame(mvrnorm(n=sample_size, mu=mu, Sigma=sigma))
-  mod1.par.df <- data.frame()
-  mod2.par.df <- data.frame()
-  mod3.par.df <- data.frame()
   
-  for(run in 1:nrun){
-    boot.data <- sim.data[sample(nrow(sim.data), sample_size, replace=T), ]
-
-    # Fitting for expo-expo
-    #     hazard function
-    haz.mod1.fit.par <- optim(c(0.1,0.1),haz.mod1.ll,
-                              xi=boot.data[,1], ti=boot.data[,2],
-                              hessian=T)
-    haz.mod1.par <- haz.mod1.fit.par$par
-
-    #     copula function
-    cop.mod1.fit.par <- optim(c(1, 1, 1), cop.mod1.ll,
-                              xi=boot.data[,1], ti=boot.data[,2],
-                              hessian=T) 
-
-    #    storing all parameters for each run
-    mod1.par.df <- rbind(mod1.par.df,c(haz.mod1.par[1],haz.mod1.par[2],
-                                       exp(cop.mod1.fit.par$par[1]),cop.mod1.fit.par$par[2],
-                                       cop.mod1.fit.par$par[3]))
-
-    # Fitting for normal-expo
-    #     hazard function
-    haz.mod2.fit.par <- optim(rep(0.1,3),haz.mod2.ll,
-                              xi=boot.data[,1], ti=boot.data[,2],
-                              hessian=T)
-    haz.mod2.par <- haz.mod2.fit.par$par
-
-    #     copula function
-    cop.mod2.fit.par <- optim(c(0, 6, 6,0.1), cop.mod2.ll,
-                              xi=boot.data[,1], ti=boot.data[,2],
-                              hessian=T) 
-    
-    #    storing all parameters for each run
-    mod2.par.df <- rbind(mod2.par.df,c(haz.mod2.par[1],haz.mod2.par[2],haz.mod2.par[3],
-                                       exp(cop.mod2.fit.par$par[1]),cop.mod2.fit.par$par[2],
-                                       cop.mod2.fit.par$par[3],cop.mod2.fit.par$par[4]))
-
-    # Fitting for normal-weibull
-    #     hazard function
-    haz.mod3.fit.par <- optim(rep(0.1,4),haz.mod3.ll,
-                              xi=boot.data[,1], ti=boot.data[,2],
-                              hessian=T)
-    haz.mod3.par <- haz.mod3.fit.par$par
-    
-    #     copula function
-    cop.mod3.fit.par <- optim(c(0, 6, 6, 0, 8), cop.mod3.ll,
-                              xi=boot.data[,1], ti=boot.data[,2])   
-
-    #    storing all parameters for each run
-    mod3.par.df <- rbind(mod3.par.df,c(haz.mod3.par[1],exp(haz.mod3.par[2]),haz.mod3.par[3],haz.mod3.par[4],
-                                       exp(cop.mod3.fit.par$par[1]),cop.mod3.fit.par$par[2],
-                                       cop.mod3.fit.par$par[3],exp(cop.mod3.fit.par$par[4]),
-                                       exp(cop.mod3.fit.par$par[5])))
-  }
+  theta <- list(...)$theta
+  lambda <- list(...)$lambda
+  lambda1 <- list(...)$lambda1
+  lambda2 <- list(...)$lambda2
+  mu <- list(...)$mu
+  sigma <- list(...)$sigma
+  shape <- list(...)$shape
+  scale <- list(...)$scale
   
-  colnames(mod1.par.df) <- c('haz.beta','haz.lambda','cop.rho','marg.lambda1','marg.lambda2')
-  colnames(mod2.par.df) <- c('haz.beta','haz.mu','haz.sigma','cop.rho','marg.mu','marg.sigma','marg.lambda')
-  colnames(mod3.par.df) <- c('haz.beta','haz.gamma','haz.mu','haz.sigma','cop.rho','marg.mu','marg.sigma','marg.lambda','marg.gamma')
+  if(sim == 1) result <- sim.mod1(nrun=nrun,sample_size=sample_size,theta=theta,lambda1=lambda1,lambda2=lambda2)
+  else if(sim == 2) result <- sim.mod2(nrun=nrun,sample_size=sample_size,theta=theta,mu=mu,sigma=sigma,lambda=lambda)
+  else if(sim == 3) result <- sim.mod3(nrun=nrun,sample_size=sample_size,theta=theta,mu=mu,sigma=sigma,shape=shape,scale=scale)
 
-  # calculating bootstrap S.E and CI
-  mod1 <- list('Fitted.par'=apply(mod1.par.df,2,mean),
-               'CI.lower.upper'=apply(mod1.par.df,2,quantile, probs=c(0.05,0.95)),
-               'S.Err'=sqrt(apply(mod1.par.df,2,var)))
-  mod2 <- list('Fitted.par'=apply(mod2.par.df,2,mean),
-               'CI.lower.upper'=apply(mod2.par.df,2,quantile, probs=c(0.05,0.95)),
-               'S.Err'=sqrt(apply(mod2.par.df,2,var)))
-  mod3 <- list('Fitted.par'=apply(mod3.par.df,2,mean),
-               'CI.lower.upper'=apply(mod3.par.df,2,quantile, probs=c(0.05,0.95)),
-               'S.Err'=sqrt(apply(mod3.par.df,2,var)))
   print(proc.time() - stime)
-  
-  return(list('expo-expo'=mod1,'normal-expo'=mod2,'normal-weibull'=mod3))
+  return(result)
 }
 
-sim.run(100,sample_size=100,mu=c(5,7),sigma=matrix(c(1,-.9,-.9,1),ncol=2))
+sim.run(nrun=100,sample_size=100, sim=1,theta=3.5, lambda1=.3, lambda2=.2)
+sim.run(nrun=100,sample_size=100, sim=2,theta=3.5,mu=5,sigma=2,lambda=.2)
+sim.run(nrun=100,sample_size=100, sim=3,theta=3.5,mu=5,sigma=2,shape=2,scale=7)
+
+# clay.cop <- rotCopula(archmCopula(family='clayton',dim=2, param=4.693), flip=c(F,T))
+# mymvd <- mvdc(copula=clay.cop, margins=c('norm','weibull'), 
+#               paramMargins=list(list(mean=6.82,sd=7.66),list(shape=0.512,scale=2.613)))
+# X <- rMvdc(200, mymvd) # generate X
+# contour(mymvd,dMvdc, xlim=c(-1,25),ylim=c(-3,10))
+# plot(X)
+# pairs.panels(X)
