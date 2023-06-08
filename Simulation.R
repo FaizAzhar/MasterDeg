@@ -153,6 +153,33 @@ cop.mod3.ll <- function(pars,xi,ti){
   return(-logll)
 }
 
+#    normal-normal
+haz.mod4.ll <- function(par,xi,ti){
+  n <- length(xi)
+  mu.X <- par[1]
+  sigma.X <- par[2]
+  beta <- par[3]
+  sigma.T <- par[4]
+  logll <- -n*(log(sigma.T)+log(sigma.X))-.5*(sum((ti-xi*beta)**2))/(sigma.T**2)-.5*(sum((xi-xi*mu.X)**2))/(sigma.X**2)
+  return(-logll)
+}
+
+cop.mod4.ll <- function(pars,xi,ti){
+  theta   <- exp(pars[1])
+  mu.X    <- pars[2]
+  sigma.X <- pars[3]
+  mu.T <- pars[4]
+  sigma.T <- pars[5]
+  rot.cop <- rotCopula(claytonCopula(theta),flip=c(F,T)) #rotated 90 degrees
+  f.X <- dnorm(xi, mean = mu.X, sd=sigma.X) #first stage ~ estimate marginal
+  f.T <- dnorm(ti, mean = mu.T, sd=sigma.T)
+  F.X <- pnorm(xi, mean = mu.X, sd=sigma.X)
+  F.T <- pnorm(ti, mean = mu.T, sd=sigma.T)
+  f.XT <- f.X*f.T*dCopula(copula=rot.cop,cbind(F.X,F.T)) #second stage ~ estimate copula 
+  # f.XT <- f.X*f.T*((1+theta)*((1-F.X)**(-theta)+F.T**(-theta)-1)**(-1/theta-2)*(F.T**(-theta-1))*((1-F.X)**(-theta-1))) #second stage ~ estimate copula 
+  logll <- sum(log(f.XT))
+  return(-logll)
+}
 # =================================================
 #  Function to run bootstrapping for each scenario
 # =================================================
@@ -166,6 +193,7 @@ sim.mod1 <- function(nrun,sample_size,theta,lambda1,lambda2){
   sim.data <- as.data.frame(rMvdc(500, mymvd))
   mod.par.df <- data.frame()
   for(run in 1:nrun){
+    if(run%%10 == 0) cat("Runs =",run,"\n")
     boot.data <- sim.data[sample(nrow(sim.data), sample_size, replace=T), ]
     
     # Fitting for expo-expo
@@ -187,10 +215,13 @@ sim.mod1 <- function(nrun,sample_size,theta,lambda1,lambda2){
   
   colnames(mod.par.df) <- c('haz.beta','haz.lambda','cop.theta','marg.lambda1','marg.lambda2')
   # calculating bootstrap S.E and CI
-  mod <- list('Fitted.par'=apply(mod.par.df,2,mean),
-               'CI.lower.upper'=apply(mod.par.df,2,quantile, probs=c(0.05,0.95)),
-               'S.Err'=sqrt(apply(mod.par.df,2,var)))
-  return(list('expo-expo'=mod))
+  mod <- data.frame('Estimated'=apply(mod.par.df,2,mean),
+                    'CI.lower'=apply(mod.par.df,2,quantile, probs=0.05),
+                    'CI.upper'=apply(mod.par.df,2,quantile, probs=0.95),
+                    'S.Err'=sqrt(apply(mod.par.df,2,var)))
+  write.csv(mod, "C:\\Users\\farea\\Documents\\RWorkspace\\expo_expo_sim.csv")
+  
+  return(mod)
 }
 
 #normal-expo
@@ -202,9 +233,10 @@ sim.mod2 <- function(nrun,sample_size,theta,mu,sigma,lambda){
   sim.data <- as.data.frame(rMvdc(500, mymvd))
   mod.par.df <- data.frame()
   for(run in 1:nrun){
+    if(run%%10 == 0) cat("Runs =",run,"\n")
     boot.data <- sim.data[sample(nrow(sim.data), sample_size, replace=T), ]
     
-    # Fitting for expo-expo
+    # Fitting for normal-expo
     #     hazard function
     haz.mod.fit.par <- optim(c((sample_size/sum(boot.data[,1]*boot.data[,2])),mean(boot.data[,1]),var(boot.data[,1])),haz.mod2.ll,
                              xi=boot.data[,1], ti=boot.data[,2])
@@ -222,10 +254,13 @@ sim.mod2 <- function(nrun,sample_size,theta,mu,sigma,lambda){
   
   colnames(mod.par.df) <- c('haz.beta','haz.mu','haz.sigma','cop.theta','marg.mu','marg.sigma','marg.lambda')
   # calculating bootstrap S.E and CI
-  mod <- list('Fitted.par'=apply(mod.par.df,2,mean),
-              'CI.lower.upper'=apply(mod.par.df,2,quantile, probs=c(0.05,0.95)),
-              'S.Err'=sqrt(apply(mod.par.df,2,var)))
-  return(list('normal-expo'=mod))
+  mod <- data.frame('Estimated'=apply(mod.par.df,2,mean),
+                    'CI.lower'=apply(mod.par.df,2,quantile, probs=0.05),
+                    'CI.upper'=apply(mod.par.df,2,quantile, probs=0.95),
+                    'S.Err'=sqrt(apply(mod.par.df,2,var)))
+  write.csv(mod, "C:\\Users\\farea\\Documents\\RWorkspace\\normal_expo_sim.csv")
+  
+  return(mod)
 }
 
 #normal-weibull
@@ -237,9 +272,10 @@ sim.mod3 <- function(nrun,sample_size,theta,mu,sigma,shape,scale){
   sim.data <- as.data.frame(rMvdc(500, mymvd))
   mod.par.df <- data.frame()
   for(run in 1:nrun){
+    if(run%%10 == 0) cat("Runs =",run,"\n")
     boot.data <- sim.data[sample(nrow(sim.data), sample_size, replace=T), ]
     
-    # Fitting for expo-expo
+    # Fitting for normal-weibull
     #     hazard function
     haz.mod.fit.par <- optim(c(.1,mu,sigma,shape),haz.mod3.ll,
                              xi=boot.data[,1], ti=boot.data[,2])
@@ -257,10 +293,52 @@ sim.mod3 <- function(nrun,sample_size,theta,mu,sigma,shape,scale){
   
   colnames(mod.par.df) <- c('haz.beta','haz.mu','haz.sigma','haz.shape','cop.theta','marg.mu','marg.sigma','marg.shape','marg.scale')
   # calculating bootstrap S.E and CI
-  mod <- list('Fitted.par'=apply(mod.par.df,2,mean),
-              'CI.lower.upper'=apply(mod.par.df,2,quantile, probs=c(0.05,0.95)),
-              'S.Err'=sqrt(apply(mod.par.df,2,var)))
-  return(list('normal-weibull'=mod))
+  mod <- data.frame('Estimated'=apply(mod.par.df,2,mean),
+                    'CI.lower'=apply(mod.par.df,2,quantile, probs=0.05),
+                    'CI.upper'=apply(mod.par.df,2,quantile, probs=0.95),
+                    'S.Err'=sqrt(apply(mod.par.df,2,var)))
+  write.csv(mod, "C:\\Users\\farea\\Documents\\RWorkspace\\normal_weibull_sim.csv")
+  
+  return(mod)
+}
+
+#normal-normal
+sim.mod4 <- function(nrun,sample_size,theta,mu.X,mu.T,sigma.X,sigma.T){
+  clay.cop <- rotCopula(archmCopula(family='clayton',dim=2, param=theta), flip=c(F,T))
+  mymvd <- mvdc(copula=clay.cop, margins=c('norm','norm'), 
+                paramMargins=list(list(mean=mu.X,sd=sigma.X),list(mean=mu.T, sd=sigma.T)))
+  set.seed(7)
+  sim.data <- as.data.frame(rMvdc(500, mymvd))
+  mod.par.df <- data.frame()
+  for(run in 1:nrun){
+    if(run%%10 == 0) cat("Runs =",run,"\n")
+    boot.data <- sim.data[sample(nrow(sim.data), sample_size, replace=T), ]
+    
+    # Fitting for normal-normal
+    #     hazard function
+    haz.mod.fit.par <- optim(c(mu.X,sigma.X,.1,sigma.T),haz.mod4.ll,
+                             xi=boot.data[,1], ti=boot.data[,2])
+    haz.mod.par <- haz.mod.fit.par$par
+    
+    #     copula function
+    cop.mod.fit.par <- optim(c(log(theta),mu.X,sigma.X,mu.T,sigma.T), cop.mod4.ll,
+                             xi=boot.data[,1], ti=boot.data[,2]) 
+    
+    #    storing all parameters for each run
+    mod.par.df <- rbind(mod.par.df,c(haz.mod.par[1],haz.mod.par[2],haz.mod.par[3],haz.mod.par[4],
+                                     exp(cop.mod.fit.par$par[1]),cop.mod.fit.par$par[2],cop.mod.fit.par$par[3],
+                                     cop.mod.fit.par$par[4],cop.mod.fit.par$par[5]))
+  }
+  
+  colnames(mod.par.df) <- c('haz.muX','haz.sigmaX','haz.beta','haz.sigmaT','cop.theta','marg.muX','marg.sigmaX','marg.muT','marg.sigmaT')
+  # calculating bootstrap S.E and CI
+  mod <- data.frame('Estimated'=apply(mod.par.df,2,mean),
+                    'CI.lower'=apply(mod.par.df,2,quantile, probs=0.05),
+                    'CI.upper'=apply(mod.par.df,2,quantile, probs=0.95),
+                    'S.Err'=sqrt(apply(mod.par.df,2,var)))
+  write.csv(mod, "C:\\Users\\farea\\Documents\\RWorkspace\\normal_normal_sim.csv")
+  
+  return(mod)
 }
 
 # =======================================
@@ -279,18 +357,24 @@ sim.run <- function(nrun, sample_size=100, sim,...){
   sigma <- list(...)$sigma
   shape <- list(...)$shape
   scale <- list(...)$scale
+  mu.X <- list(...)$mu.X
+  mu.T <- list(...)$mu.T
+  sigma.X <- list(...)$sigma.X
+  sigma.T <- list(...)$sigma.T
   
   if(sim == 1) result <- sim.mod1(nrun=nrun,sample_size=sample_size,theta=theta,lambda1=lambda1,lambda2=lambda2)
   else if(sim == 2) result <- sim.mod2(nrun=nrun,sample_size=sample_size,theta=theta,mu=mu,sigma=sigma,lambda=lambda)
   else if(sim == 3) result <- sim.mod3(nrun=nrun,sample_size=sample_size,theta=theta,mu=mu,sigma=sigma,shape=shape,scale=scale)
+  else if(sim == 4) result <- sim.mod4(nrun=nrun,sample_size=sample_size,theta=theta,mu.X=mu.X,sigma.X=sigma.X,mu.T=mu.T,sigma.T=sigma.T)
 
   print(proc.time() - stime)
   return(result)
 }
 
-sim.run(nrun=100,sample_size=100, sim=1,theta=3.5, lambda1=.3, lambda2=.2)
-sim.run(nrun=100,sample_size=100, sim=2,theta=3.5,mu=5,sigma=2,lambda=.2)
-sim.run(nrun=100,sample_size=100, sim=3,theta=3.5,mu=5,sigma=2,shape=2,scale=7)
+sim.run(nrun=100,sample_size=100, sim=1,theta=3.5, lambda1=.3, lambda2=.2) # expo-expo
+sim.run(nrun=100,sample_size=100, sim=2,theta=3.5,mu=5,sigma=2,lambda=.2) # normal-expo
+sim.run(nrun=100,sample_size=100, sim=3,theta=3.5,mu=5,sigma=2,shape=2,scale=7) # normal-weibull
+sim.run(nrun=100,sample_size=100, sim=4,theta=3.5,mu.X=5,sigma.X=2,mu.T=7,sigma.T=2) # normal-normal
 
 # clay.cop <- rotCopula(archmCopula(family='clayton',dim=2, param=4.693), flip=c(F,T))
 # mymvd <- mvdc(copula=clay.cop, margins=c('norm','weibull'), 
