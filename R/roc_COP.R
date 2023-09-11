@@ -1,0 +1,83 @@
+roc_COP <- function(max.x,time.t,mod,params, n.quant=10){
+
+  # allocating memory & seed
+  lambda.t = params$lambda.t; mu.x = params$mu.x; theta = params$theta
+  sigma.x = params$sigma.x; shape.t = params$shape.t; scale.t = params$scale.t
+  denom.se <- rep(NA,length(time.t)); denom.fpr <- rep(NA,length(time.t))
+  ans <- data.frame('sensitivity'=rep(NA,n.quant*length(time.t)),
+                    'specificity'=rep(seq(0,1,length.out=n.quant),length(time.t)),
+                    'time'=sort(rep(time.t,n.quant)),
+                    'cutoff.x'=rep(NA,n.quant*length(time.t)))
+
+  set.seed(12345)
+
+  if(mod=='exp_exp'){
+    # calculating denominator of Sensitivity
+    for (i in 1:length(time.t)){
+      denom.se[i] <- pexp(time.t[i],rate=lambda.t)
+    }
+
+    # calculating denominator of Specificity
+    ans$denom.se <- sort(rep(denom.se,n.quant))
+    v <- ans$denom.se
+    ans$denom.sp <- 1-ans$denom.se
+    ans$prob.sp <- ans$specificity * ans$denom.sp
+
+    # calculating inverse of Specificity (to find cutoff)
+    u.quant <- ((ans$prob.sp)^(-theta) + 1 - (ans$denom.sp)^(-theta))^(-1/theta)
+    ans$cutoff.x <- qexp(u.quant,rate=mu.x)
+
+    # calculating Sensitivity
+    u <- pexp(ans$cutoff.x,rate=mu.x)
+    ans$sensitivity <- (v-(u - (u^-theta + (1-v)^-theta - 1)^(-1/theta)))/v
+  }
+
+  else if(mod=='norm_exp'){
+    # calculating denominator of Sensitivity
+    for (i in 1:length(time.t)){
+      denom.se[i] <- pexp(time.t[i],rate=lambda.t)
+    }
+
+    # calculating denominator of Specificity
+    ans$denom.se <- sort(rep(denom.se,n.quant))
+    v <- ans$denom.se
+    ans$denom.sp <- 1-ans$denom.se
+    ans$prob.sp <- ans$specificity * ans$denom.sp
+
+    # calculating inverse of Specificity (to find cutoff)
+    u.quant <- ((ans$prob.sp)^(-theta) + 1 - (ans$denom.sp)^(-theta))^(-1/theta)
+    ans$cutoff.x <- qnorm(u.quant,mean=mu.x, sd=sigma.x)
+
+    # calculating Sensitivity
+    u <- pnorm(ans$cutoff.x,mean=mu.x, sd=sigma.x)
+    ans$sensitivity <- (v-(u - (u^-theta + (1-v)^-theta - 1)^(-1/theta)))/v
+  }
+
+  else if(mod=='norm_weib'){
+    # calculating denominator of Sensitivity
+    for (i in 1:length(time.t)){
+      denom.se[i] <- pweibull(time.t[i],scale=1/scale.t,shape=shape.t)
+    }
+
+    # calculating denominator of Specificity
+    ans$denom.se <- sort(rep(denom.se,n.quant))
+    v <- ans$denom.se
+    ans$denom.sp <- 1-ans$denom.se
+    ans$prob.sp <- ans$specificity * ans$denom.sp
+
+    # calculating inverse of Specificity (to find cutoff)
+    u.quant <- ((ans$prob.sp)^(-theta) + 1 - (ans$denom.sp)^(-theta))^(-1/theta)
+    ans$cutoff.x <- qnorm(u.quant,mean=mu.x, sd=sigma.x)
+
+    # calculating Sensitivity
+    u <- pnorm(ans$cutoff.x,mean=mu.x, sd=sigma.x)
+    ans$sensitivity <- (v-(u - (u^-theta + (1-v)^-theta - 1)^(-1/theta)))/v
+  }
+  ans$sensitivity[which(ans$sensitivity>1)] <- 1
+  for(i in 1:length(time.t)){
+    ans[n.quant*(i-1)+1,] <- c(1,0,time.t[i],NA,NA,NA,NA)
+    ans[n.quant*i,] <- c(0,1,time.t[i],NA,NA,NA,NA)
+  }
+  ans <- ans[,c(1,2,3,4)]
+  return(ans)
+}
