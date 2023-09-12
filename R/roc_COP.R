@@ -21,15 +21,23 @@ roc_COP <- function(max.x,time.t,mod,params, n.quant=10){
     ans$denom.se <- sort(rep(denom.se,n.quant))
     v <- ans$denom.se
     ans$denom.sp <- 1-ans$denom.se
-    ans$prob.sp <- ans$specificity * ans$denom.sp
+    ans$prob.sp <- ans$specificity * ans$denom.sp + v
 
     # calculating inverse of Specificity (to find cutoff)
-    u.quant <- ((ans$prob.sp)^(-theta) + 1 - (ans$denom.sp)^(-theta))^(-1/theta)
-    ans$cutoff.x <- qexp(u.quant,rate=mu.x)
+    u <- seq(0,1,length.out=10001)
+    for (i in 1:length(denom.se)){
+      u.check <- u + ((1-u)^-theta + denom.se[i]^-theta - 1)^(-1/theta)
+      for (j in 1:length(ans$prob.sp)){
+        if(denom.se[i] == ans$denom.se[j]){
+          u.quant <- u[which.min(abs(u.check-ans$prob.sp[j]))]
+          ans$cutoff.x[j] <- qexp(u.quant,rate=mu.x)
+        }
+      }
+    }
 
     # calculating Sensitivity
     u <- pexp(ans$cutoff.x,rate=mu.x)
-    ans$sensitivity <- (v-(u - (u^-theta + (1-v)^-theta - 1)^(-1/theta)))/v
+    ans$sensitivity <- ((1-u)^-theta + v^-theta - 1)^-(1/theta)/v
   }
 
   else if(mod=='norm_exp'){
@@ -42,15 +50,23 @@ roc_COP <- function(max.x,time.t,mod,params, n.quant=10){
     ans$denom.se <- sort(rep(denom.se,n.quant))
     v <- ans$denom.se
     ans$denom.sp <- 1-ans$denom.se
-    ans$prob.sp <- ans$specificity * ans$denom.sp
+    ans$prob.sp <- ans$specificity * ans$denom.sp + v
 
     # calculating inverse of Specificity (to find cutoff)
-    u.quant <- ((ans$prob.sp)^(-theta) + 1 - (ans$denom.sp)^(-theta))^(-1/theta)
-    ans$cutoff.x <- qnorm(u.quant,mean=mu.x, sd=sigma.x)
+    u <- seq(0,1,length.out=10001)
+    for (i in 1:length(denom.se)){
+      u.check <- u + ((1-u)^-theta + denom.se[i]^-theta - 1)^(-1/theta)
+      for (j in 1:length(ans$prob.sp)){
+        if(denom.se[i] == ans$denom.se[j]){
+          u.quant <- u[which.min(abs(u.check-ans$prob.sp[j]))]
+          ans$cutoff.x[j] <- qnorm(u.quant,mean=mu.x, sd=sigma.x)
+        }
+      }
+    }
 
     # calculating Sensitivity
     u <- pnorm(ans$cutoff.x,mean=mu.x, sd=sigma.x)
-    ans$sensitivity <- (v-(u - (u^-theta + (1-v)^-theta - 1)^(-1/theta)))/v
+    ans$sensitivity <- ((1-u)^-theta + v^-theta - 1)^-(1/theta)/v
   }
 
   else if(mod=='norm_weib'){
@@ -63,15 +79,23 @@ roc_COP <- function(max.x,time.t,mod,params, n.quant=10){
     ans$denom.se <- sort(rep(denom.se,n.quant))
     v <- ans$denom.se
     ans$denom.sp <- 1-ans$denom.se
-    ans$prob.sp <- ans$specificity * ans$denom.sp
+    ans$prob.sp <- ans$specificity * ans$denom.sp + v
 
     # calculating inverse of Specificity (to find cutoff)
-    u.quant <- ((ans$prob.sp)^(-theta) + 1 - (ans$denom.sp)^(-theta))^(-1/theta)
-    ans$cutoff.x <- qnorm(u.quant,mean=mu.x, sd=sigma.x)
+    u <- seq(0,1,length.out=10001)
+    for (i in 1:length(denom.se)){
+      u.check <- u + ((1-u)^-theta + denom.se[i]^-theta - 1)^(-1/theta)
+      for (j in 1:length(ans$prob.sp)){
+        if(denom.se[i] == ans$denom.se[j]){
+          u.quant <- u[which.min(abs(u.check-ans$prob.sp[j]))]
+          ans$cutoff.x[j] <- qnorm(u.quant,mean=mu.x, sd=sigma.x)
+        }
+      }
+    }
 
     # calculating Sensitivity
     u <- pnorm(ans$cutoff.x,mean=mu.x, sd=sigma.x)
-    ans$sensitivity <- (v-(u - (u^-theta + (1-v)^-theta - 1)^(-1/theta)))/v
+    ans$sensitivity <- ((1-u)^-theta + v^-theta - 1)^-(1/theta)/v
   }
   ans$sensitivity[which(ans$sensitivity>1)] <- 1
   for(i in 1:length(time.t)){

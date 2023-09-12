@@ -8,4 +8,6 @@ In focus, parametric approaches are used to achieve the objective for this study
 
 Parametric hazard function and copula function are investigated for this research.
 
+The created R package is created to run the simulation studies which is written in the 'main' folder
+
 This study is part of the project funded by the University of Technology, Malaysia.

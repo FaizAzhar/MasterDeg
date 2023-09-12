@@ -4,7 +4,7 @@ generate_dataCOP <- function(mod, params, n.sample){
   shape.t <- params$shape.t; scale.t <- params$scale.t;
 
   if(mod == 'exp_exp'){
-    clay.cop <- rotCopula(archmCopula(family='clayton',dim=2,param=theta), flip=c(F,T)) # rotate 270 clayton
+    clay.cop <- rotCopula(archmCopula(family='clayton',dim=2,param=theta), flip=c(T,F)) # rotate 90 clayton
     clay.dist <- mvdc(copula=clay.cop, margins=c('exp','exp'),
                       paramMargins=list(rate=mu.x,rate=lambda.t))
 
@@ -22,7 +22,7 @@ generate_dataCOP <- function(mod, params, n.sample){
     simdata <- data.frame(x=simdata$x,t=t,status=status)
   }
   else if(mod == 'norm_exp'){
-    clay.cop <- rotCopula(archmCopula(family='clayton',dim=2,param=theta), flip=c(F,T)) # rotate 270 clayton
+    clay.cop <- rotCopula(archmCopula(family='clayton',dim=2,param=theta), flip=c(T,F)) # rotate 90 clayton
     clay.dist <- mvdc(copula=clay.cop, margins=c('norm','exp'),
                       paramMargins=list(list(mean=mu.x,sd=sigma.x),rate=lambda.t))
 
@@ -40,7 +40,7 @@ generate_dataCOP <- function(mod, params, n.sample){
     simdata <- data.frame(x=simdata$x,t=t,status=status)
   }
   else if(mod == 'norm_weib'){
-    clay.cop <- rotCopula(archmCopula(family='clayton',dim=2,param=theta), flip=c(F,T)) # rotate 270 clayton
+    clay.cop <- rotCopula(archmCopula(family='clayton',dim=2,param=theta), flip=c(T,F)) # rotate 90 clayton
     clay.dist <- mvdc(copula=clay.cop, margins=c('norm','weibull'),
                       paramMargins=list(list(mean=mu.x,sd=sigma.x),list(shape=shape.t,scale=scale.t)))
 

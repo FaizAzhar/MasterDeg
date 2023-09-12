@@ -17,8 +17,8 @@ MCMCestimate_COP <- function(model, df, f.path, p.jags, i.jags, n.chains=3,
       for(i in 1:n){
         u[i] <- 1-exp(-mu.X*X[i])
         v[i] <- 1-exp(-lambda.T*Time[i])
-        log.c[i] <- (-theta-1)*log(u[i])+log(1/theta+1)-(1/theta+2)*log(pow(u[i],-theta)+pow(1-v[i],-theta)-1)+log(theta)-(theta+1)*log(1-v[i])
-        log.C1[i] <- -(theta+1)*log(u[i])-(1/theta+1)*log(pow(u[i],-theta)+pow(1-v[i],-theta)-1)
+        log.c[i] <- log(1+theta) + (-1/theta-2)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*(log(1-u[i]) + log(v[i]))
+        log.C1[i] <- (-1/theta-1)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*log(1-u[i])
         log.fx[i] <- log(mu.X*exp(-mu.X*X[i]))
         log.ft[i] <- log(lambda.T*exp(-lambda.T*Time[i]))
 
@@ -47,8 +47,8 @@ MCMCestimate_COP <- function(model, df, f.path, p.jags, i.jags, n.chains=3,
       for(i in 1:n){
         u[i] <- phi((X[i]-mu.X)/sigma.X)
         v[i] <- 1-exp(-lambda.T*Time[i])
-        log.c[i] <- (-theta-1)*log(u[i])+log(1/theta+1)-(1/theta+2)*log(pow(u[i],-theta)+pow(1-v[i],-theta)-1)+log(theta)-(theta+1)*log(1-v[i])
-        log.C1[i] <- -(theta+1)*log(u[i])-(1/theta+1)*log(pow(u[i],-theta)+pow(1-v[i],-theta)-1)
+        log.c[i] <- log(1+theta) + (-1/theta-2)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*(log(1-u[i]) + log(v[i]))
+        log.C1[i] <- (-1/theta-1)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*log(1-u[i])
         log.fx[i] <- -pow(X[i]-mu.X,2)/(2*pow(sigma.X,2)) - log(sigma.X*pow(2*(22/7),1/2))
         log.ft[i] <- log(lambda.T*exp(-lambda.T*Time[i]))
 
@@ -79,8 +79,8 @@ MCMCestimate_COP <- function(model, df, f.path, p.jags, i.jags, n.chains=3,
       for(i in 1:n){
         u[i] <- phi((X[i]-mu.X)/sigma.X)
         v[i] <- 1-exp(-pow(scale.T*Time[i],shape.T))
-        log.c[i] <- (-theta-1)*log(u[i])+log(1/theta+1)-(1/theta+2)*log(pow(u[i],-theta)+pow(1-v[i],-theta)-1)+log(theta)-(theta+1)*log(1-v[i])
-        log.C1[i] <- -(theta+1)*log(u[i])-(1/theta+1)*log(pow(u[i],-theta)+pow(1-v[i],-theta)-1)
+        log.c[i] <- log(1+theta) + (-1/theta-2)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*(log(1-u[i]) + log(v[i]))
+        log.C1[i] <- (-1/theta-1)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*log(1-u[i])
         log.fx[i] <- -pow(X[i]-mu.X,2)/(2*pow(sigma.X,2)) - log(sigma.X*pow(2*(22/7),1/2))
         log.ft[i] <- log(shape.T*scale.T*pow(Time[i]*scale.T,shape.T-1)*exp(-pow(scale.T*Time[i],shape.T)))
 
