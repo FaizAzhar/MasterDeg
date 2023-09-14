@@ -1,3 +1,5 @@
+#' CDF_trapz
+#'
 #' Computing the area under curve using trapezoidal method
 #'
 #' @param f A function of curve.

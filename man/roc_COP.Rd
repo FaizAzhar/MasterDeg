@@ -2,7 +2,7 @@
 % Please edit documentation in R/roc_COP.R
 \name{roc_COP}
 \alias{roc_COP}
-\title{Function to produce time-dependent ROC using Rotated 90 Clayton copula.}
+\title{roc_COP}
 \usage{
 roc_COP(max.x, time.t, mod, params, n.quant = 10)
 }
@@ -11,18 +11,18 @@ roc_COP(max.x, time.t, mod, params, n.quant = 10)
 
 \item{time.t}{A vector of T that we are interested to produce its ROC.}
 
-\item{mod}{A string that specify our joint model of biomarker X and time-to-event T.
+\item{mod}{A string that specify our joint model of biomarker X and time-to-event T.\cr
 mod = c('exp_exp','norm_exp','norm_weib')}
 
-\item{params}{A list of estimated parameters.
-'exp_exp': params = list( theta, lambda.t, mu.x).
-'norm_exp': params = list(theta, lambda.t, mu.x, sigma.x).
-'norm_weib': params = list(theta, scale.t, shape.t, mu.x, sigma.x).
-theta: dependence measurement (tau (0 to 1);theta=2*tau/(1-tau))
-lambda.t: scale parameter of T
-scale.t: scale parameter of T (for weibull)
-shape.t: shape parameter of T (for weibull)
-mu.x: scale parameter of X
+\item{params}{A list of estimated parameters.\cr
+'exp_exp': params = list( theta, lambda.t, mu.x).\cr
+'norm_exp': params = list(theta, lambda.t, mu.x, sigma.x).\cr
+'norm_weib': params = list(theta, scale.t, shape.t, mu.x, sigma.x).\cr
+theta: dependence measurement (tau (0 to 1);theta=2*tau/(1-tau))\cr
+lambda.t: scale parameter of T\cr
+scale.t: scale parameter of T (for weibull)\cr
+shape.t: shape parameter of T (for weibull)\cr
+mu.x: scale parameter of X\cr
 sigma.x: standard deviation of X}
 
 \item{n.quant}{A number of how many quantile of Specificity that will be used in the ROC curve.}

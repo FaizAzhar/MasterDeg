@@ -2,7 +2,7 @@
 % Please edit documentation in R/cdf_trapz.R
 \name{cdf_trapz}
 \alias{cdf_trapz}
-\title{Computing the area under curve using trapezoidal method}
+\title{CDF_trapz}
 \usage{
 cdf_trapz(f, a = 0, b, n.pts = 1001)
 }

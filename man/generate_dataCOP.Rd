@@ -2,24 +2,24 @@
 % Please edit documentation in R/generate_dataCOP.R
 \name{generate_dataCOP}
 \alias{generate_dataCOP}
-\title{Function to generate bivariate data using Rotated 90 Clayton copula}
+\title{generate_dataCOP}
 \usage{
 generate_dataCOP(mod, params, n.sample)
 }
 \arguments{
-\item{mod}{A string that specify which model to be implemented to join the bivariate data (join biomarker X and time-to-event T).
+\item{mod}{A string that specify which model to be implemented to join the bivariate data (join biomarker X and time-to-event T).\cr
 mod = c('exp_exp', 'norm_exp', 'norm_weib')}
 
-\item{params}{A list of parameters for selected model.
-'exp_exp': params = list(c.rate, theta, lambda.t, mu.x).
-'norm_exp': params = list(c.rate, theta, lambda.t, mu.x, sigma.x).
-'norm_weib': params = list(c.rate, theta, scale.t, shape.t, mu.x, sigma.x).
-c.rate: censoring rate (0 to 1)
-theta: dependence measurement (tau (0 to 1);theta=2*tau/(1-tau))
-lambda.t: scale parameter of T
-scale.t: scale parameter of T (for weibull)
-shape.t: shape parameter of T (for weibull)
-mu.x: scale parameter of X
+\item{params}{A list of parameters for selected model.\cr
+'exp_exp': params = list(c.rate, theta, lambda.t, mu.x).\cr
+'norm_exp': params = list(c.rate, theta, lambda.t, mu.x, sigma.x).\cr
+'norm_weib': params = list(c.rate, theta, scale.t, shape.t, mu.x, sigma.x).\cr
+c.rate: censoring rate (0 to 1)\cr
+theta: dependence measurement (tau (0 to 1);theta=2*tau/(1-tau))\cr
+lambda.t: scale parameter of T\cr
+scale.t: scale parameter of T (for weibull)\cr
+shape.t: shape parameter of T (for weibull)\cr
+mu.x: scale parameter of X\cr
 sigma.x: standard deviation of X}
 
 \item{n.sample}{A number of sample size to be generates.}

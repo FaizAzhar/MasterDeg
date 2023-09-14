@@ -1,17 +1,19 @@
+#' generate_dataPH
+#'
 #' Function to generate bivariate data using Proportional Hazard Model using inverse sampling technique
 #'
-#' @param mod A string that specify which model to be implemented to join the bivariate data (join biomarker X and time-to-event T).
+#' @param mod A string that specify which model to be implemented to join the bivariate data (join biomarker X and time-to-event T).\cr
 #'            mod = c('exp_exp', 'norm_exp', 'norm_weib')
-#' @param params A list of parameters for selected model.
-#'               'exp_exp': params = list(c.rate, beta, lambda.t, mu.x).
-#'               'norm_exp': params = list(c.rate, beta, lambda.t, mu.x, sigma.x).
-#'               'norm_weib': params = list(c.rate, beta, scale.t, shape.t, mu.x, sigma.x).
-#'               c.rate: censoring rate (0 to 1)
-#'               beta: association measurement
-#'               lambda.t: scale parameter of T
-#'               scale.t: scale parameter of T (for weibull)
-#'               shape.t: shape parameter of T (for weibull)
-#'               mu.x: scale parameter of X
+#' @param params A list of parameters for selected model.\cr
+#'               'exp_exp': params = list(c.rate, beta, lambda.t, mu.x).\cr
+#'               'norm_exp': params = list(c.rate, beta, lambda.t, mu.x, sigma.x).\cr
+#'               'norm_weib': params = list(c.rate, beta, scale.t, shape.t, mu.x, sigma.x).\cr
+#'               c.rate: censoring rate (0 to 1)\cr
+#'               beta: association measurement\cr
+#'               lambda.t: scale parameter of T\cr
+#'               scale.t: scale parameter of T (for weibull)\cr
+#'               shape.t: shape parameter of T (for weibull)\cr
+#'               mu.x: scale parameter of X\cr
 #'               sigma.x: standard deviation of X
 #' @param n.sample A number of sample size to be generates.
 #' @returns A dataframe with 3 columns (x = biomarker value, t = observable time-to-event, status = censored/not censor (0 or 1))

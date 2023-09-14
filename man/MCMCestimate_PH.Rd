@@ -2,7 +2,7 @@
 % Please edit documentation in R/MCMCestimate_PH.R
 \name{MCMCestimate_PH}
 \alias{MCMCestimate_PH}
-\title{Function to run estimation process of joint model discussed in this package using MCMC Gibbs Sampling.}
+\title{MCMCestimate_PH}
 \usage{
 MCMCestimate_PH(
   model,
@@ -17,28 +17,28 @@ MCMCestimate_PH(
 )
 }
 \arguments{
-\item{model}{A string which specify the model of interest.
+\item{model}{A string which specify the model of interest.\cr
 model = c('exp_exp','norm_exp','norm_weib').}
 
 \item{df}{A dataframe with 3 columns ('x' = biomarker, 't' = time-to-event, 'status' = censoring status (0 or 1))}
 
 \item{f.path}{A string that specify file path to store value of estimated parameters.}
 
-\item{p.jags}{A vector of parameters that need to be monitored.
-'exp_exp':  c('lambda.T','beta','mu.X','Deviance')
-'norm_exp': c('lambda.T','beta','mu.X','sigma.X','Deviance')
-'norm_weib': c('scale.T','shape.T','beta','mu.X','sigma.X','Deviance')
+\item{p.jags}{A vector of parameters that need to be monitored.\cr
+'exp_exp':  c('lambda.T','beta','mu.X','Deviance')\cr
+'norm_exp': c('lambda.T','beta','mu.X','sigma.X','Deviance')\cr
+'norm_weib': c('scale.T','shape.T','beta','mu.X','sigma.X','Deviance')\cr
 Deviance: Average of '-2*loglikelihood' (Dbar) - Will be used for manual DIC calculation.}
 
-\item{i.jags}{A function that generate the initial value of parameter used in JAGS.
-'exp_exp': function(){list(lambda.T=lambda.t,beta=beta, mu.X=mu.x)}
-'norm_exp': function(){list(lambda.T=lambda.t,beta=beta, mu.X=mu.x, tau=runif(1))}
-'norm_weib': function(){list(shape.T=shape.t,scale.T=scale.t,beta=beta, mu.X=mu.x, tau=runif(1))}
-beta: A value of association measurement
-lambda.T: A scale parameter of T
-scale.T: A scale parameter of T (for weibull)
-shape.T: A shape parameter of T (for weibull)
-mu.x: A scale parameter for X
+\item{i.jags}{A function that generate the initial value of parameter used in JAGS.\cr
+'exp_exp': function(){list(lambda.T=lambda.t,beta=beta, mu.X=mu.x)}\cr
+'norm_exp': function(){list(lambda.T=lambda.t,beta=beta, mu.X=mu.x, tau=runif(1))}\cr
+'norm_weib': function(){list(shape.T=shape.t,scale.T=scale.t,beta=beta, mu.X=mu.x, tau=runif(1))}\cr
+beta: A value of association measurement\cr
+lambda.T: A scale parameter of T\cr
+scale.T: A scale parameter of T (for weibull)\cr
+shape.T: A shape parameter of T (for weibull)\cr
+mu.x: A scale parameter for X\cr
 tau: A standard deviation for X (JAGS suggest using tau)}
 
 \item{n.chains}{A number of chains to run MCMC process.}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/MCMCestimate_COP.R
 \name{MCMCestimate_COP}
 \alias{MCMCestimate_COP}
-\title{Function to run estimation process of joint model discussed in this package using MCMC Gibbs Sampling.}
+\title{MCMCestimate_COP}
 \usage{
 MCMCestimate_COP(
   model,
@@ -17,28 +17,28 @@ MCMCestimate_COP(
 )
 }
 \arguments{
-\item{model}{A string which specify the model of interest.
+\item{model}{A string which specify the model of interest.\cr
 model = c('exp_exp','norm_exp','norm_weib').}
 
 \item{df}{A dataframe with 3 columns ('x' = biomarker, 't' = time-to-event, 'status' = censoring status (0 or 1))}
 
 \item{f.path}{A string that specify file path to store value of estimated parameters.}
 
-\item{p.jags}{A vector of parameters that need to be monitored.
-'exp_exp':  c('lambda.T','theta','mu.X','Deviance')
-'norm_exp': c('lambda.T','theta','mu.X','sigma.X','Deviance')
-'norm_weib': c('scale.T','shape.T','theta','mu.X','sigma.X','Deviance')
+\item{p.jags}{A vector of parameters that need to be monitored.\cr
+'exp_exp':  c('lambda.T','theta','mu.X','Deviance')\cr
+'norm_exp': c('lambda.T','theta','mu.X','sigma.X','Deviance')\cr
+'norm_weib': c('scale.T','shape.T','theta','mu.X','sigma.X','Deviance')\cr
 Deviance: Average of -2*loglikelihood (Dbar) - Will be used for manual DIC calculation.}
 
-\item{i.jags}{A function that generate the initial value of parameter used in JAGS.
-'exp_exp': function(){list(lambda.T=lambda.t,theta=0.4, mu.X=mu.x)}
-'norm_exp': function(){list(lambda.T=lambda.t,theta=theta, mu.X=mu.x, tau=runif(1))}
-'norm_weib': function(){list(k=scale.t,shape.T=shape.t,theta=theta, mu.X=mu.x, tau=runif(1))}
-theta: A value of dependence measurement
-lambda.T: A scale parameter of T
-k: A scale parameter of T (for weibull; JAGS use a different version of scale)
-shape.T: A shape parameter of T (for weibull)
-mu.x: A scale parameter for X
+\item{i.jags}{A function that generate the initial value of parameter used in JAGS.\cr
+'exp_exp': function(){list(lambda.T=lambda.t,theta=0.4, mu.X=mu.x)}\cr
+'norm_exp': function(){list(lambda.T=lambda.t,theta=theta, mu.X=mu.x, tau=runif(1))}\cr
+'norm_weib': function(){list(k=scale.t,shape.T=shape.t,theta=theta, mu.X=mu.x, tau=runif(1))}\cr
+theta: A value of dependence measurement\cr
+lambda.T: A scale parameter of T\cr
+k: A scale parameter of T (for weibull; JAGS use a different version of scale)\cr
+shape.T: A shape parameter of T (for weibull)\cr
+mu.x: A scale parameter for X\cr
 tau: A standard deviation for X (JAGS suggest using tau)}
 
 \item{n.chains}{A number of chains to run MCMC process.}

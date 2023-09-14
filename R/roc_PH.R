@@ -1,18 +1,20 @@
+#' roc_PH
+#'
 #' Function to produce time-dependent ROC using Proportional Hazard Model.
 #'
 #' @param max.x A value that specify what is the maximum X of our data.
 #' @param time.t A vector of T that we are interested to produce its ROC.
-#' @param mod A string that specify our joint model of biomarker X and time-to-event T.
+#' @param mod A string that specify our joint model of biomarker X and time-to-event T. \cr
 #'            mod = c('exp_exp','norm_exp','norm_weib')
-#' @param params A list of estimated parameters.
-#'               'exp_exp': params = list(beta, lambda.t, mu.x).
-#'               'norm_exp': params = list(beta, lambda.t, mu.x, sigma.x).
-#'               'norm_weib': params = list(beta, scale.t, shape.t, mu.x, sigma.x).
-#'               beta: association measurement
-#'               lambda.t: scale parameter of T
-#'               scale.t: scale parameter of T (for weibull)
-#'               shape.t: shape parameter of T (for weibull)
-#'               mu.x: scale parameter of X
+#' @param params A list of estimated parameters.\cr
+#'               'exp_exp': params = list(beta, lambda.t, mu.x).\cr
+#'               'norm_exp': params = list(beta, lambda.t, mu.x, sigma.x).\cr
+#'               'norm_weib': params = list(beta, scale.t, shape.t, mu.x, sigma.x).\cr
+#'               beta: association measurement\cr
+#'               lambda.t: scale parameter of T\cr
+#'               scale.t: scale parameter of T (for weibull)\cr
+#'               shape.t: shape parameter of T (for weibull)\cr
+#'               mu.x: scale parameter of X\cr
 #'               sigma.x: standard deviation of X
 #' @param n.sample A value of sample size that will be used in Monte Carlo Integration method (to find inverse of Specificity).
 #' @param cutoff.n A value of how many biomarker subdivision is used (to find inverse of Specificity).
