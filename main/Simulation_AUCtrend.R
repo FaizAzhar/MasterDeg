@@ -23,7 +23,7 @@ for(i in 1:length(beta)){
                            params=params)
   t <- quantile(df.PH$t,probs=c(0.1,0.25,0.4,0.6,0.75,0.9))
   roc.exp_exp <- roc_PH(max.x=max(df.PH$x),time.t=t,mod='exp_exp',
-                             params=params,n.quant=n.quant,n.sample=monte.sample)
+                        params=params,n.quant=n.quant,n.sample=monte.sample)
   res <- roc.exp_exp %>% group_by(as.character(time)) %>%
     summarize(AUC=AUC(1-specificity,sensitivity)) %>% data.frame()
   res <- cbind(res,rep(beta[i],length(t)))
@@ -57,7 +57,7 @@ for(i in 1:length(beta)){
   df.PH <- generate_dataPH('norm_exp', n.sample=data.sample, params=params)
   t <- quantile(df.PH$t,probs=c(0.1,0.25,0.4,0.6,0.75,0.9))
   roc.norm_exp <- roc_PH(max.x=max(df.PH$x), time.t=t, mod='norm_exp',
-                        params=params, n.quant=n.quant, n.sample=monte.sample)
+                         params=params, n.quant=n.quant, n.sample=monte.sample)
   res <- roc.norm_exp %>% group_by(as.character(time)) %>%
     summarize(AUC=AUC(1-specificity,sensitivity)) %>% data.frame()
   res <- cbind(res,rep(beta[i],length(t)))

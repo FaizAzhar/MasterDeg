@@ -1,3 +1,25 @@
+#' Function to generate bivariate data using Rotated 90 Clayton copula
+#'
+#' @param mod A string that specify which model to be implemented to join the bivariate data (join biomarker X and time-to-event T).
+#'            mod = c('exp_exp', 'norm_exp', 'norm_weib')
+#' @param params A list of parameters for selected model.
+#'               'exp_exp': params = list(c.rate, theta, lambda.t, mu.x).
+#'               'norm_exp': params = list(c.rate, theta, lambda.t, mu.x, sigma.x).
+#'               'norm_weib': params = list(c.rate, theta, scale.t, shape.t, mu.x, sigma.x).
+#'               c.rate: censoring rate (0 to 1)
+#'               theta: dependence measurement (tau (0 to 1);theta=2*tau/(1-tau))
+#'               lambda.t: scale parameter of T
+#'               scale.t: scale parameter of T (for weibull)
+#'               shape.t: shape parameter of T (for weibull)
+#'               mu.x: scale parameter of X
+#'               sigma.x: standard deviation of X
+#' @param n.sample A number of sample size to be generates.
+#' @returns A dataframe with 3 columns (x = biomarker value, t = observable time-to-event, status = censored/not censor (0 or 1))
+#' @examples
+#' data <- generate_dataCOP('exp_exp', params=list(c.rate=0.9, theta=2*(0.8)/(1-0.8), lambda.t=0.5, mu.x=1), n.sample=200)
+#' data <- generate_dataCOP('norm_exp', params=list(c.rate=0.9, theta=2*(0.8)/(1-0.8), lambda.t=0.5, mu.x=5, sigma.x=0.8), n.sample=200)
+#' data <- generate_dataCOP('norm_weib', params=list(c.rate=0.9, theta=2*(0.8)/(1-0.8), scale.t=1/1.5, shape.t=1.2, mu.x=5, sigma.x=0.8), n.sample=200)
+
 generate_dataCOP <- function(mod, params, n.sample){
   mu.x <- params$mu.x; lambda.t <- params$lambda.t; theta <- params$theta; c.rate <- params$c.rate;
   sigma.x <- params$sigma.x;
