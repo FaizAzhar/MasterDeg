@@ -36,7 +36,7 @@
 
 
 MCMCestimate_COP <- function(model, df, f.path, p.jags, i.jags, n.chains=3,
-                            n.iter=50000, n.thin=1, n.burnin=2000){
+                            n.iter=20000, n.thin=5, n.burnin=2000){
   n <- nrow(df)
   t <- df$t # time column
   x <- df$x # biomarker column
@@ -52,12 +52,12 @@ MCMCestimate_COP <- function(model, df, f.path, p.jags, i.jags, n.chains=3,
       }
       # Estimate copula parameter
       for(i in 1:n){
-        u[i] <- 1-exp(-mu.X*X[i])
-        v[i] <- 1-exp(-lambda.T*Time[i])
+        u[i] <- pexp(X[i],mu.X)
+        v[i] <- pexp(Time[i],lambda.T)
         log.c[i] <- log(1+theta) + (-1/theta-2)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*(log(1-u[i]) + log(v[i]))
-        log.C1[i] <- (-1/theta-1)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*log(1-u[i])
-        log.fx[i] <- log(mu.X*exp(-mu.X*X[i]))
-        log.ft[i] <- log(lambda.T*exp(-lambda.T*Time[i]))
+        log.C1[i] <- (-1/theta-1)*log(pow(1-u[i],-theta) + pow(1-v[i],-theta) - 1) + (-theta-1)*log(1-u[i])
+        log.fx[i] <- log(dexp(X[i],mu.X))
+        log.ft[i] <- log(dexp(Time[i],lambda.T))
 
         # using zeros-trick instead of standard log-likelihood
         L[i] <- delta[i] * (log.c[i]+log.fx[i]+log.ft[i]) + (1-delta[i])*(log.C1[i]+log.fx[i])
@@ -82,12 +82,12 @@ MCMCestimate_COP <- function(model, df, f.path, p.jags, i.jags, n.chains=3,
       }
       # Estimate copula parameter
       for(i in 1:n){
-        u[i] <- phi((X[i]-mu.X)/sigma.X)
-        v[i] <- 1-exp(-lambda.T*Time[i])
+        u[i] <- pnorm(X[i],mu.X,tau)
+        v[i] <- pexp(Time[i],lambda.T)
         log.c[i] <- log(1+theta) + (-1/theta-2)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*(log(1-u[i]) + log(v[i]))
-        log.C1[i] <- (-1/theta-1)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*log(1-u[i])
-        log.fx[i] <- -pow(X[i]-mu.X,2)/(2*pow(sigma.X,2)) - log(sigma.X*pow(2*(22/7),1/2))
-        log.ft[i] <- log(lambda.T*exp(-lambda.T*Time[i]))
+        log.C1[i] <- (-1/theta-1)*log(pow(1-u[i],-theta) + pow(1-v[i],-theta) - 1) + (-theta-1)*log(1-u[i])
+        log.fx[i] <- log(dnorm(X[i],mu.X,tau))
+        log.ft[i] <- log(dexp(Time[i],lambda.T))
 
         # using zeros-trick instead of standard log-likelihood
         L[i] <- delta[i] * (log.c[i]+log.fx[i]+log.ft[i]) + (1-delta[i])*(log.C1[i]+log.fx[i])
@@ -114,13 +114,12 @@ MCMCestimate_COP <- function(model, df, f.path, p.jags, i.jags, n.chains=3,
       }
       # Estimate copula parameter
       for(i in 1:n){
-        u[i] <- phi((X[i]-mu.X)/sigma.X)
-        v[i] <- 1-exp(-pow(scale.T*Time[i],shape.T))
+        u[i] <- pnorm(X[i], mu.X, tau)
+        v[i] <- pweib(Time[i], shape.T, k)
         log.c[i] <- log(1+theta) + (-1/theta-2)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*(log(1-u[i]) + log(v[i]))
-        log.C1[i] <- (-1/theta-1)*log(pow(1-u[i],-theta) + pow(v[i],-theta) - 1) + (-theta-1)*log(1-u[i])
-        log.fx[i] <- -pow(X[i]-mu.X,2)/(2*pow(sigma.X,2)) - log(sigma.X*pow(2*(22/7),1/2))
-        log.ft[i] <- log(shape.T*scale.T*pow(Time[i]*scale.T,shape.T-1)*exp(-pow(scale.T*Time[i],shape.T)))
-
+        log.C1[i] <- (-1/theta-1)*log(pow(1-u[i],-theta) + pow(1-v[i],-theta) - 1) + (-theta-1)*log(1-u[i])
+        log.fx[i] <- log(dnorm(X[i], mu.X, tau))
+        log.ft[i] <- log(dweib(Time[i], shape.T, k))
         # using zeros-trick instead of standard log-likelihood
         L[i] <- delta[i] * (log.c[i]+log.fx[i]+log.ft[i]) + (1-delta[i])*(log.C1[i]+log.fx[i])
         phi[i] <- 10^5 - L[i]

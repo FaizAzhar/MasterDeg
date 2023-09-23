@@ -36,7 +36,7 @@
 
 
 MCMCestimate_PH <- function(model, df, f.path, p.jags, i.jags, n.chains=3,
-                             n.iter=50000, n.thin=1, n.burnin=2000){
+                             n.iter=20000, n.thin=5, n.burnin=2000){
   n <- nrow(df)
   t <- df$t # time column
   x <- df$x # biomarker column

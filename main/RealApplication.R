@@ -56,14 +56,14 @@ params.est <- list(mu.x=par.est[4,1],scale.t=par.est[5,1],beta=par.est[1,1],shap
 ph.const <- exp(params.est$beta*mayo$x)
 logHaz <- log(params.est$shape.t) + log(params.est$scale.t) + (params.est$shape.t-1)*log(params.est$scale.t*mayo$t) + log(ph.const)
 logSurv <- -(params.est$scale.t*mayo$t)^params.est$shape.t*ph.const
-logfX[i] <- -(mayo$x-params.est$mu.x)^2/(2*(params.est$sigma.x^2)) - log(params.est$sigma.x*(2*(22/7))^(1/2))
+logfX <- -(mayo$x-params.est$mu.x)^2/(2*(params.est$sigma.x^2)) - log(params.est$sigma.x*(2*(22/7))^(1/2))
 L <- mayo$status * (logHaz + logfX) + logSurv
 Dhat <- sum(-2*L)
 DIC.3 <- 2*params.est$dev - Dhat
 
 # Finding the best model to use for Copula function
 p1.jags <- c('lambda.T','theta','mu.X','Deviance')
-i1.jags <- function(){list(lambda.T=runif(1),theta=runif(1), mu.X=runif(1))}
+i1.jags <- function(){list(lambda.T=runif(1),theta=1, mu.X=runif(1))}
 MCMCestimate_COP('exp_exp', mayo, f.path=f.path, p.jags=p1.jags, i.jags=i1.jags)
 par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_cop_expo_expo_result.txt"))
 params.est <- list(mu.x=par.est[4,1],lambda.t=par.est[3,1],theta=par.est[5,1], dev=par.est[2,1])
@@ -80,7 +80,7 @@ Dhat <- sum(-2*L)
 DIC.4 <- 2*params.est$dev - Dhat
 
 p2.jags <- c('lambda.T','theta','mu.X','sigma.X','Deviance')
-i2.jags <- function(){list(lambda.T=runif(1),theta=runif(1), mu.X=runif(1), tau=runif(1))}
+i2.jags <- function(){list(lambda.T=runif(1),theta=1, mu.X=6, tau=runif(1))}
 MCMCestimate_COP('norm_exp', mayo, f.path=f.path, p.jags=p2.jags, i.jags=i2.jags)
 par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_cop_norm_expo_result.txt"))
 params.est <- list(mu.x=par.est[4,1],lambda.t=par.est[3,1],theta=par.est[6,1],sigma.x=par.est[5,1], dev=par.est[2,1])
@@ -97,7 +97,7 @@ Dhat <- sum(-2*L)
 DIC.5 <- 2*params.est$dev - Dhat
 
 p3.jags <- c('shape.T','scale.T','theta','mu.X','sigma.X','Deviance')
-i3.jags <- function(){list(shape.T=runif(1),k=runif(1),theta=runif(1), mu.X=runif(1), tau=runif(1))}
+i3.jags <- function(){list(shape.T=1.5,k=0.2,theta=1, mu.X=6, tau=runif(1))}
 MCMCestimate_COP('norm_weib', mayo, f.path=f.path, p.jags=p3.jags, i.jags=i3.jags)
 par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_cop_norm_weib_result.txt"))
 params.est <- list(mu.x=par.est[5,1],shape.t=par.est[3,1],theta=par.est[7,1],sigma.x=par.est[6,1],scale.t=par.est[4,1], dev=par.est[2,1])
@@ -115,7 +115,7 @@ DIC.6 <- 2*params.est$dev - Dhat
 
 # ===================================================================================
 # Both MCMC process for PH model and Copula function suggests to use the joint
-# model from Normal-Weibull scenario since its DIC value is the lowest compare to 
+# model from Normal-Weibull scenario since its DIC value is the lowest compare to
 # the other 2 scenario
 # ===================================================================================
 
@@ -123,6 +123,7 @@ DIC.6 <- 2*params.est$dev - Dhat
 n.quant=21; monte.sample=1000000
 t <- quantile(mayo$t,probs=c(0.1,0.25,0.4,0.6,0.75,0.9))
 
+set.seed(123456)
 par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_ph_norm_weib_result.txt"))
 PH.est <- list(mu.x=par.est[4,1],scale.t=par.est[5,1],beta=par.est[1,1],shape.t=par.est[6,1],sigma.x=par.est[7,1], dev=par.est[3,1])
 PH.roc <- roc_PH(max.x=max(mayo$x),time.t=t,mod='norm_weib',
@@ -145,10 +146,9 @@ colnames(KM.auc) <- c('time','AUC')
 KM.auc$model <- 'KM'
 
 # ROC curve
-p1 <- ggplot(PH.roc, aes(x=1-specificity, y=sensitivity, group=time, color=time, fill=time)) +
+p1 <- ggplot(PH.roc, aes(x=1-specificity, y=sensitivity, group=time, color=time)) +
   geom_line(linewidth=0.8) +
   geom_point(shape=21) +
-  scale_fill_gradient(high = "#132B43", low = "#56B1F7") +
   scale_colour_gradient(high = "#132B43", low = "#56B1F7") +
   xlim(0,1) +
   ylim(0,1) +
@@ -156,10 +156,9 @@ p1 <- ggplot(PH.roc, aes(x=1-specificity, y=sensitivity, group=time, color=time,
   labs(title='Proportional Hazard Model') +
   theme(legend.position='none')
 
-p2 <- ggplot(COP.roc, aes(x=1-specificity, y=sensitivity, group=time, color=time, fill=time)) +
+p2 <- ggplot(COP.roc, aes(x=1-specificity, y=sensitivity, group=time, color=time)) +
   geom_line(linewidth=0.8) +
   geom_point(shape=21) +
-  scale_fill_gradient(high = "#132B43", low = "#56B1F7") +
   scale_colour_gradient(high = "#132B43", low = "#56B1F7") +
   xlim(0,1) +
   ylim(0,1) +
@@ -173,8 +172,8 @@ grid.arrange(p1,p2, nrow=1, ncol=2,
 # AUC trend
 AUC.res <- rbind(PH.auc,COP.auc,KM.auc)
 ggplot(AUC.res, aes(x=time, y=AUC, fill=model, color=model, group=model)) +
-  geom_line(linewidth = 0.3) +
-  geom_point(shape=21) +
-  ylim(0,1)+
+  geom_line(linewidth = 1) +
+  geom_point()+
+  ylim(0.5,1)+
   labs(title='Comparison for AUC trend') +
-  theme(legend.position=c(.65,0.2), legend.direction='horizontal')
+  theme(legend.position=c(.5,0.1), legend.direction='horizontal')

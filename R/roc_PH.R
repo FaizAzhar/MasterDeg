@@ -71,6 +71,7 @@ roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.qu
 
     start.time <- Sys.time()
     for (j in 1:length(time.t)){
+      t <- time.t[j]
       for(i in 1: cutoff.n){
         res[i] <- cdf_trapz(f.c,b=cutoff[i])
         if(is.na(res[i])) res[i] <- 0
@@ -133,6 +134,7 @@ roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.qu
     cdf.df <- data.frame('C'=cutoff)
     start.time <- Sys.time()
     for (j in 1:length(time.t)){
+      t <- time.t[j]
       for(i in 1: cutoff.n){
         res[i] <- cdf_trapz(f.c,b=cutoff[i])
         if(is.na(res[i])) res[i] <- 0
@@ -194,6 +196,7 @@ roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.qu
     cdf.df <- data.frame('C'=cutoff)
     start.time <- Sys.time()
     for (j in 1:length(time.t)){
+      t <- time.t[j]
       for(i in 1: cutoff.n){
         res[i] <- cdf_trapz(f.c,b=cutoff[i])
         if(is.na(res[i])) res[i] <- 0

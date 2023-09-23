@@ -9,12 +9,13 @@ load_all(".")
 # derived from PH and Copula method.
 # =============================================
 
-n.quant=21; monte.sample=1000000; data.sample=c(30,60,120,200); c.rate=0.2; beta <- 1.2; tau <- 0.7; theta <- 2*tau/(1-tau)
+n.quant=21; monte.sample=100000; data.sample=c(30,60,120,200); c.rate=0.2; beta <- 1.2; tau <- 0.7; theta <- 2*tau/(1-tau)
 f.path='C:/Users/farea/Documents/RWorkspace'
 # =========================================
 # Simulation study for Expo-Expo scenario
 # =========================================
 ROC1_res <- NA
+store.param1 <- data.frame()
 mu.x=1.4; lambda.t=0.2;
 
 set.seed(123456)
@@ -27,6 +28,7 @@ for(i in 1:length(data.sample)){
   MCMCestimate_PH(model='exp_exp', df=df.PH, f.path=f.path, p.jags=p.jags, i.jags=i.jags)
   par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_ph_expo_expo_result.txt"))
   params.est <- list(mu.x=par.est[5,1],lambda.t=par.est[4,1],beta=par.est[1,1])
+  store.param1 <- rbind(store.param1,params.est)
   t <- quantile(df.PH$t,probs=0.75)
   roc.exp_exp <- roc_PH(max.x=max(df.PH$x),time.t=t,mod='exp_exp',
                         params=params.est,n.quant=n.quant,n.sample=monte.sample)
@@ -35,16 +37,18 @@ for(i in 1:length(data.sample)){
 }
 
 ROC1_resCOP <- NA
+store.paramCOP1 <- data.frame()
 mu.x <- 1.4; lambda.t <- 0.2;
 set.seed(123456)
 for(i in 1:length(data.sample)){
   params=list(mu.x=mu.x,lambda.t=lambda.t,c.rate=c.rate,theta=theta)
   df.COP <- generate_dataCOP('exp_exp', n.sample=data.sample[i],params=params)
   p.jags <- c('lambda.T','theta','mu.X','Deviance')
-  i.jags <- function(){list(lambda.T=lambda.t,theta=0.4, mu.X=mu.x)}
+  i.jags <- function(){list(lambda.T=lambda.t,theta=theta, mu.X=mu.x)}
   MCMCestimate_COP(model='exp_exp', df=df.COP, f.path=f.path, p.jags=p.jags, i.jags=i.jags)
   par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_cop_expo_expo_result.txt"))
   params.est <- list(mu.x=par.est[4,1],lambda.t=par.est[3,1],theta=par.est[5,1])
+  store.paramCOP1 <- rbind(store.paramCOP1,params.est)
   t <- quantile(df.COP$t,probs=0.75)
   roc.exp_exp <- roc_COP(max.x=max(df.COP$x), time.t=t, mod='exp_exp', params=params.est, n.quant=n.quant)
   roc.exp_exp$n.sam <- rep(data.sample[i],n.quant)
@@ -56,6 +60,7 @@ for(i in 1:length(data.sample)){
 # Simulation study for Norm-Expo scenario
 # =========================================
 ROC2_res <- NA
+store.param2 <- data.frame()
 mu.x=5; sigma.x=0.8; lambda.t=0.2;
 
 set.seed(123456)
@@ -67,6 +72,7 @@ for(i in 1:length(data.sample)){
   MCMCestimate_PH(model='norm_exp', df=df.PH, f.path=f.path, p.jags=p.jags, i.jags=i.jags)
   par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_ph_norm_expo_result.txt"))
   params.est <- list(mu.x=par.est[5,1],lambda.t=par.est[4,1],beta=par.est[1,1],sigma.x=par.est[6,1])
+  store.param2 <- rbind(store.param2,params.est)
   t <- quantile(df.PH$t,probs=0.75)
   roc.norm_exp <- roc_PH(max.x=max(df.PH$x), time.t=t, mod='norm_exp',
                          params=params.est, n.quant=n.quant, n.sample=monte.sample)
@@ -75,6 +81,7 @@ for(i in 1:length(data.sample)){
 }
 
 ROC2_resCOP <- NA
+store.paramCOP2 <- data.frame()
 mu.x=5; sigma.x=0.8; lambda.t=0.2;
 set.seed(123456)
 for(i in 1:length(data.sample)){
@@ -85,6 +92,7 @@ for(i in 1:length(data.sample)){
   MCMCestimate_COP(model='norm_exp', df=df.COP, f.path=f.path, p.jags=p.jags, i.jags=i.jags)
   par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_cop_norm_expo_result.txt"))
   params.est <- list(mu.x=par.est[4,1],lambda.t=par.est[3,1],theta=par.est[6,1],sigma.x=par.est[5,1])
+  store.paramCOP2 <- rbind(store.paramCOP2,params.est)
   t <- quantile(df.COP$t,probs=0.75)
   roc.norm_exp <- roc_COP(max.x=max(df.COP$x), time.t=t, mod='norm_exp', params=params.est,n.quant=n.quant)
   roc.norm_exp$n.sam <- rep(data.sample[i],n.quant)
@@ -96,6 +104,7 @@ for(i in 1:length(data.sample)){
 # Simulation study for Norm-Weib scenario
 # =========================================
 ROC3_res <- NA
+store.param3 <- data.frame()
 mu.x=5; sigma.x=0.8; shape.t=1.2; scale.t=1.4;
 
 set.seed(123456)
@@ -107,6 +116,7 @@ for(i in 1:length(data.sample)){
   MCMCestimate_PH(model='norm_weib', df=df.PH, f.path=f.path, p.jags=p.jags, i.jags=i.jags)
   par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_ph_norm_weib_result.txt"))
   params.est <- list(mu.x=par.est[4,1],scale.t=par.est[5,1],beta=par.est[1,1],shape.t=par.est[6,1],sigma.x=par.est[7,1])
+  store.param3 <- rbind(store.param3,params.est)
   t <- quantile(df.PH$t,probs=0.75)
   roc.norm_weib <- roc_PH(max.x=max(df.PH$x), time.t=t, mod='norm_weib',
                           params=params.est, n.quant=n.quant, n.sample=monte.sample)
@@ -115,6 +125,7 @@ for(i in 1:length(data.sample)){
 }
 
 ROC3_resCOP <- NA
+store.paramCOP3 <- data.frame()
 mu.x=5; sigma.x=0.8; shape.t=1.2; scale.t=1/1.4;
 set.seed(123456)
 for(i in 1:length(data.sample)){
@@ -126,15 +137,16 @@ for(i in 1:length(data.sample)){
   MCMCestimate_COP(model='norm_weib', df=df.COP, f.path=f.path, p.jags=p.jags, i.jags=i.jags)
   par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_cop_norm_weib_result.txt"))
   params.est <- list(mu.x=par.est[5,1],shape.t=par.est[3,1],theta=par.est[7,1],sigma.x=par.est[6,1],scale.t=par.est[4,1])
+  store.paramCOP3[i] <- rbind(store.paramCOP3,params.est)
   t <- quantile(df.COP$t,probs=0.75)
   roc.norm_weib <- roc_COP(max.x=max(df.COP$x), time.t=t,mod='norm_weib', params=params.est,n.quant=n.quant)
   roc.norm_weib$n.sam <- rep(data.sample[i],n.quant)
   ROC3_resCOP <- rbind(ROC3_resCOP,roc.norm_weib)
 }
 
-# # ================
-# # ROC PH model
-# # ================
+# ================
+# ROC PH model
+# ================
 ROC1_res <- ROC1_res[-1,]
 ROC2_res <- ROC2_res[-1,]
 ROC3_res <- ROC3_res[-1,]
