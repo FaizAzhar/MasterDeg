@@ -1,5 +1,5 @@
 pkgs <- c('openxlsx','copula','R2OpenBUGS','R2jags','coda','MCMCvis','readxl','survivalROC',
-          'DescTools','dplyr','ggplot2','gridExtra','grid','devtools','latex2exp')
+          'DescTools','dplyr','ggplot2','gridExtra','grid','devtools','latex2exp', 'risksetROC')
 lapply(pkgs, require, character.only = TRUE)
 load_all(".")
 f.path='C:/Users/farea/Documents/RWorkspace'
@@ -145,6 +145,14 @@ for (i in t){
 colnames(KM.auc) <- c('time','AUC')
 KM.auc$model <- 'KM'
 
+RiskROC.auc <- data.frame()
+for (i in t){
+  roc <- risksetROC(Stime=mayo$t, status=mayo$status, marker=mayo$x, predict.time=i)$AUC
+  RiskROC.auc <- rbind(RiskROC.auc, c(i,roc))
+}
+colnames(RiskROC.auc) <- c('time','AUC')
+RiskROC.auc$model <- 'Risk Set'
+
 # ROC curve
 p1 <- ggplot(PH.roc, aes(x=1-specificity, y=sensitivity, group=time, color=time)) +
   geom_line(linewidth=0.8) +
@@ -163,17 +171,17 @@ p2 <- ggplot(COP.roc, aes(x=1-specificity, y=sensitivity, group=time, color=time
   xlim(0,1) +
   ylim(0,1) +
   geom_abline(slope=1, linetype='dashed') +
-  labs(y=element_blank(), title='Copula Function') +
+  labs(y=element_blank(), title='Copula Function', color='Time (years)') +
   theme(axis.text.y=element_blank(),legend.position=c(.7,0.2), legend.direction='horizontal')
 
 grid.arrange(p1,p2, nrow=1, ncol=2,
              top = textGrob("Time-dependent ROC curve", gp=gpar(fontsize=20, font=3)))
 
 # AUC trend
-AUC.res <- rbind(PH.auc,COP.auc,KM.auc)
-ggplot(AUC.res, aes(x=time, y=AUC, fill=model, color=model, group=model)) +
-  geom_line(linewidth = 1) +
-  geom_point()+
+AUC.res <- rbind(PH.auc,COP.auc,KM.auc, RiskROC.auc)
+ggplot(AUC.res, aes(x=time, y=AUC)) +
+  geom_line(linewidth = 1, aes(linetype=model)) +
+  scale_linetype_manual(values=c('dotted','solid','dashed', 'dotdash'))+
   ylim(0.5,1)+
-  labs(title='Comparison for AUC trend') +
+  labs(x='Time (years)',title='Comparison for AUC trend') +
   theme(legend.position=c(.5,0.1), legend.direction='horizontal')

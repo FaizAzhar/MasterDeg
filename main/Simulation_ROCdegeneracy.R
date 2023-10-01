@@ -136,8 +136,8 @@ for(i in 1:length(data.sample)){
   i.jags <- function(){list(k=scale.t,shape.T=shape.t,theta=theta, mu.X=mu.x, tau=runif(1))}
   MCMCestimate_COP(model='norm_weib', df=df.COP, f.path=f.path, p.jags=p.jags, i.jags=i.jags)
   par.est <- read.table(file.path(f.path,"Simulation_result","MCMC_cop_norm_weib_result.txt"))
-  params.est <- list(mu.x=par.est[5,1],shape.t=par.est[3,1],theta=par.est[7,1],sigma.x=par.est[6,1],scale.t=par.est[4,1])
-  store.paramCOP3[i] <- rbind(store.paramCOP3,params.est)
+  params.est <- list(mu.x=par.est[3,1],shape.t=par.est[5,1],theta=par.est[7,1],sigma.x=par.est[6,1],scale.t=par.est[4,1])
+  store.paramCOP3 <- rbind(store.paramCOP3,params.est)
   t <- quantile(df.COP$t,probs=0.75)
   roc.norm_weib <- roc_COP(max.x=max(df.COP$x), time.t=t,mod='norm_weib', params=params.est,n.quant=n.quant)
   roc.norm_weib$n.sam <- rep(data.sample[i],n.quant)
@@ -151,38 +151,32 @@ ROC1_res <- ROC1_res[-1,]
 ROC2_res <- ROC2_res[-1,]
 ROC3_res <- ROC3_res[-1,]
 
-p1 <- ggplot(ROC1_res, aes(x=1-specificity, y=sensitivity, group=n.sam, color=n.sam, fill=n.sam)) +
-  geom_line(linewidth=0.8) +
-  geom_point(shape=21) +
-  scale_fill_gradient(high = "#132B43", low = "#56B1F7") +
-  scale_colour_gradient(high = "#132B43", low = "#56B1F7") +
+p1 <- ggplot(ROC1_res, aes(x=1-specificity, y=sensitivity)) +
+  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
+  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
   xlim(0,1) +
   ylim(0,1) +
   geom_abline(slope=1, linetype='dashed') +
   labs(x=element_blank(),y=element_blank(),title='Exponential-Exponential') +
   theme(legend.position='none')
 
-p2 <- ggplot(ROC2_res, aes(x=1-specificity, y=sensitivity, group=n.sam, color=n.sam, fill=n.sam)) +
-  geom_line(linewidth=0.8) +
-  geom_point(shape=21) +
-  scale_fill_gradient(high = "#132B43", low = "#56B1F7") +
-  scale_colour_gradient(high = "#132B43", low = "#56B1F7") +
+p2 <- ggplot(ROC2_res, aes(x=1-specificity, y=sensitivity)) +
+  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
+  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
   xlim(0,1) +
   ylim(0,1) +
   geom_abline(slope=1, linetype='dashed') +
   labs(x=element_blank(),y=element_blank(), title='Normal-Exponential') +
   theme(axis.text.y=element_blank(), legend.position='none')
 
-p3 <- ggplot(ROC3_res, aes(x=1-specificity, y=sensitivity, group=n.sam, color=n.sam, fill=n.sam)) +
-  geom_line(linewidth=0.8) +
-  geom_point(shape=21) +
-  scale_fill_gradient(high = "#132B43", low = "#56B1F7") +
-  scale_colour_gradient(high = "#132B43", low = "#56B1F7") +
+p3 <- ggplot(ROC3_res, aes(x=1-specificity, y=sensitivity)) +
+  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
+  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
   xlim(0,1) +
   ylim(0,1) +
   geom_abline(slope=1, linetype='dashed') +
-  labs(x=element_blank(),y=element_blank(), title='Normal-Weibull') +
-  theme(axis.text.y=element_blank(),legend.position=c(.7,0.2), legend.direction='horizontal')
+  labs(x=element_blank(),y=element_blank(), title='Normal-Weibull', lty="Sample size:") +
+  theme(axis.text.y=element_blank(),legend.position=c(.85,0.2), legend.direction='vertical')
 
 grid.arrange(p1,p2,p3,nrow=1,ncol=3,
              top = textGrob("Time-dependent ROC with various sample size:\n PH model",gp=gpar(fontsize=20,font=3)),
@@ -196,38 +190,32 @@ ROC1_resCOP <- ROC1_resCOP[-1,]
 ROC2_resCOP <- ROC2_resCOP[-1,]
 ROC3_resCOP <- ROC3_resCOP[-1,]
 
-p1 <- ggplot(ROC1_resCOP, aes(x=1-specificity, y=sensitivity, group=n.sam, color=n.sam, fill=n.sam)) +
-  geom_line(linewidth=0.8) +
-  geom_point(shape=21) +
-  scale_fill_gradient(high = "#132B43", low = "#56B1F7") +
-  scale_colour_gradient(high = "#132B43", low = "#56B1F7") +
+p1 <- ggplot(ROC1_resCOP, aes(x=1-specificity, y=sensitivity)) +
+  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
+  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
   xlim(0,1) +
   ylim(0,1) +
   geom_abline(slope=1, linetype='dashed') +
   labs(x=element_blank(),y=element_blank(),title='Exponential-Exponential') +
   theme(legend.position='none')
 
-p2 <- ggplot(ROC2_resCOP, aes(x=1-specificity, y=sensitivity, group=n.sam, color=n.sam, fill=n.sam)) +
-  geom_line(linewidth=0.8) +
-  geom_point(shape=21) +
-  scale_fill_gradient(high = "#132B43", low = "#56B1F7") +
-  scale_colour_gradient(high = "#132B43", low = "#56B1F7") +
+p2 <- ggplot(ROC2_resCOP, aes(x=1-specificity, y=sensitivity)) +
+  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
+  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
   xlim(0,1) +
   ylim(0,1) +
   geom_abline(slope=1, linetype='dashed') +
   labs(x=element_blank(),y=element_blank(), title='Normal-Exponential') +
   theme(axis.text.y=element_blank(), legend.position='none')
 
-p3 <- ggplot(ROC3_resCOP, aes(x=1-specificity, y=sensitivity, group=n.sam, color=n.sam, fill=n.sam)) +
-  geom_line(linewidth=0.8) +
-  geom_point(shape=21) +
-  scale_fill_gradient(high = "#132B43", low = "#56B1F7") +
-  scale_colour_gradient(high = "#132B43", low = "#56B1F7") +
+p3 <- ggplot(ROC3_resCOP, aes(x=1-specificity, y=sensitivity)) +
+  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
+  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
   xlim(0,1) +
   ylim(0,1) +
   geom_abline(slope=1, linetype='dashed') +
   labs(x=element_blank(),y=element_blank(), title='Normal-Weibull') +
-  theme(axis.text.y=element_blank(),legend.position=c(.7,0.2), legend.direction='horizontal')
+  theme(axis.text.y=element_blank(),legend.position=c(.85,0.2), legend.direction='vertical')
 
 grid.arrange(p1,p2,p3,nrow=1,ncol=3,
              top = textGrob("Time-dependent ROC with various sample size:\n Copula Function",gp=gpar(fontsize=20,font=3)),
