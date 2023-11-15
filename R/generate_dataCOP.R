@@ -16,6 +16,7 @@
 #'               mu.x: scale parameter of X\cr
 #'               sigma.x: standard deviation of X
 #' @param n.sample A number of sample size to be generates.
+#' @export
 #' @returns A dataframe with 3 columns (x = biomarker value, t = observable time-to-event, status = censored/not censor (0 or 1))
 #' @examples
 #' data <- generate_dataCOP('exp_exp', params=list(c.rate=0.9, theta=2*(0.8)/(1-0.8), lambda.t=0.5, mu.x=1), n.sample=200)

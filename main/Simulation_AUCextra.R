@@ -22,6 +22,8 @@ df.PH <- generate_dataPH('exp_exp', n.sample=data.sample,
 t <- quantile(df.PH$t,probs=c(0.1,0.25,0.4,0.6,0.75,0.9))
 ROC1_res <- roc_PH(max.x=max(df.PH$x),time.t=t,mod='exp_exp',
                       params=params,n.quant=n.quant,n.sample=monte.sample)
+PH1.auc <- ROC1_res %>% group_by(time) %>%
+  summarise(AUC = AUC(1-specificity, sensitivity))
 KM1.auc <- data.frame()
 for (i in t){
   res <- survivalROC(Stime=df.PH$t, status=df.PH$status, marker=df.PH$x, predict.time=i, method='KM')$AUC
@@ -32,6 +34,7 @@ for (i in t){
   roc <- risksetROC(Stime=df.PH$t, status=df.PH$status, marker=df.PH$x, predict.time=i)$AUC
   RiskROC1.auc <- rbind(RiskROC1.auc, c(i,roc))
 }
+colnames(RiskROC1.auc) <- colnames(KM1.auc) <- c('time','AUC')
 
 mu.x <- 1.4; lambda.t <- 0.2;
 set.seed(123456)
@@ -39,6 +42,8 @@ params=list(mu.x=mu.x,lambda.t=lambda.t,c.rate=c.rate,theta=theta)
 df.COP <- generate_dataCOP('exp_exp', n.sample=data.sample,params=params)
 t <- quantile(df.COP$t,probs=c(0.1,0.25,0.4,0.6,0.75,0.9))
 ROC1_resCOP <- roc_COP(max.x=max(df.COP$x), time.t=t, mod='exp_exp', params=params, n.quant=n.quant)
+COP1.auc <- ROC1_resCOP %>% group_by(time) %>%
+  summarise(AUC = AUC(1-specificity, sensitivity))
 KM1.resauc <- data.frame()
 for (i in t){
   res <- survivalROC(Stime=df.COP$t, status=df.COP$status, marker=df.COP$x, predict.time=i, method='KM')$AUC
@@ -49,6 +54,8 @@ for (i in t){
   roc <- risksetROC(Stime=df.COP$t, status=df.COP$status, marker=df.COP$x, predict.time=i)$AUC
   RiskROC1.resauc <- rbind(RiskROC1.resauc, c(i,roc))
 }
+colnames(RiskROC1.resauc) <- colnames(KM1.resauc) <- c('time','AUC')
+
 # =========================================
 # Simulation study for Norm-Expo scenario
 # =========================================
@@ -59,6 +66,8 @@ df.PH <- generate_dataPH('norm_exp', n.sample=data.sample, params=params)
 t <- quantile(df.PH$t,probs=c(0.1,0.25,0.4,0.6,0.75,0.9))
 ROC2_res <- roc_PH(max.x=max(df.PH$x), time.t=t, mod='norm_exp',
                          params=params, n.quant=n.quant, n.sample=monte.sample)
+PH2.auc <- ROC2_res %>% group_by(time) %>%
+  summarise(AUC = AUC(1-specificity, sensitivity))
 KM2.auc <- data.frame()
 for (i in t){
   res <- survivalROC(Stime=df.PH$t, status=df.PH$status, marker=df.PH$x, predict.time=i, method='KM')$AUC
@@ -69,12 +78,17 @@ for (i in t){
   roc <- risksetROC(Stime=df.PH$t, status=df.PH$status, marker=df.PH$x, predict.time=i)$AUC
   RiskROC2.auc <- rbind(RiskROC2.auc, c(i,roc))
 }
+colnames(RiskROC2.auc) <- colnames(KM2.auc) <- c('time','AUC')
+
+
 mu.x=5; sigma.x=0.8; lambda.t=0.2;
 set.seed(123456)
 params=list(mu.x=mu.x,lambda.t=lambda.t,c.rate=c.rate,theta=theta, sigma.x=sigma.x)
 df.COP <- generate_dataCOP('norm_exp', n.sample=data.sample, params=params)
 t <- quantile(df.COP$t,probs=c(0.1,0.25,0.4,0.6,0.75,0.9))
 ROC2_resCOP <- roc_COP(max.x=max(df.COP$x), time.t=t, mod='norm_exp', params=params,n.quant=n.quant)
+COP2.auc <- ROC2_resCOP %>% group_by(time) %>%
+  summarise(AUC = AUC(1-specificity, sensitivity))
 KM2.resauc <- data.frame()
 for (i in t){
   res <- survivalROC(Stime=df.COP$t, status=df.COP$status, marker=df.COP$x, predict.time=i, method='KM')$AUC
@@ -85,6 +99,7 @@ for (i in t){
   roc <- risksetROC(Stime=df.COP$t, status=df.COP$status, marker=df.COP$x, predict.time=i)$AUC
   RiskROC2.resauc <- rbind(RiskROC2.resauc, c(i,roc))
 }
+colnames(RiskROC2.resauc) <- colnames(KM2.resauc) <- c('time','AUC')
 
 # =========================================
 # Simulation study for Norm-Weib scenario
@@ -96,6 +111,8 @@ df.PH <- generate_dataPH('norm_weib', n.sample=data.sample, params=params)
 t <- quantile(df.PH$t,probs=c(0.1,0.25,0.4,0.6,0.75,0.9))
 ROC3_res <- roc_PH(max.x=max(df.PH$x), time.t=t, mod='norm_weib',
                           params=params, n.quant=n.quant, n.sample=monte.sample)
+PH3.auc <- ROC3_res %>% group_by(time) %>%
+  summarise(AUC = AUC(1-specificity, sensitivity))
 KM3.auc <- data.frame()
 for (i in t){
   res <- survivalROC(Stime=df.PH$t, status=df.PH$status, marker=df.PH$x, predict.time=i, method='KM')$AUC
@@ -106,6 +123,8 @@ for (i in t){
   roc <- risksetROC(Stime=df.PH$t, status=df.PH$status, marker=df.PH$x, predict.time=i)$AUC
   RiskROC3.auc <- rbind(RiskROC3.auc, c(i,roc))
 }
+colnames(RiskROC3.auc) <- colnames(KM3.auc) <- c('time','AUC')
+
 mu.x=5; sigma.x=0.8; shape.t=1.2; scale.t=1/1.4;
 set.seed(123456)
 params=list(mu.x=mu.x, sigma.x=sigma.x, shape.t=shape.t,
@@ -113,6 +132,8 @@ params=list(mu.x=mu.x, sigma.x=sigma.x, shape.t=shape.t,
 df.COP <- generate_dataCOP('norm_weib', n.sample=data.sample,params=params)
 t <- quantile(df.COP$t,probs=c(0.1,0.25,0.4,0.6,0.75,0.9))
 ROC3_resCOP <- roc_COP(max.x=max(df.COP$x), time.t=t,mod='norm_weib', params=params,n.quant=n.quant)
+COP3.auc <- ROC3_resCOP %>% group_by(time) %>%
+  summarise(AUC = AUC(1-specificity, sensitivity))
 KM3.resauc <- data.frame()
 for (i in t){
   res <- survivalROC(Stime=df.COP$t, status=df.COP$status, marker=df.COP$x, predict.time=i, method='KM')$AUC
@@ -123,80 +144,65 @@ for (i in t){
   roc <- risksetROC(Stime=df.COP$t, status=df.COP$status, marker=df.COP$x, predict.time=i)$AUC
   RiskROC3.resauc <- rbind(RiskROC3.resauc, c(i,roc))
 }
+colnames(RiskROC3.resauc) <- colnames(KM3.resauc) <- c('time','AUC')
+
 # ================
 # ROC PH model
 # ================
-ROC1_res <- ROC1_res[-1,]
-ROC2_res <- ROC2_res[-1,]
-ROC3_res <- ROC3_res[-1,]
+PH3.auc$mode <- PH2.auc$mode <- PH1.auc$mode <- 'PH'
+COP3.auc$mode <- COP2.auc$mode <- COP1.auc$mode <- 'COP'
+KM3.resauc$mode <- KM2.resauc$mode <- KM1.resauc$mode <- KM3.auc$mode <- KM2.auc$mode <- KM1.auc$mode <- 'KM'
+RiskROC3.resauc$mode <- RiskROC2.resauc$mode <- RiskROC1.resauc$mode <- RiskROC3.auc$mode <- RiskROC2.auc$mode <- RiskROC1.auc$mode <- 'Risk Set'
 
-p1 <- ggplot(ROC1_res, aes(x=1-specificity, y=sensitivity)) +
-  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
-  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
-  xlim(0,1) +
-  ylim(0,1) +
-  geom_abline(slope=1, linetype='dashed') +
-  labs(x=element_blank(),y=element_blank(),title='Exponential-Exponential') +
-  theme(legend.position='none')
+ph1 <- rbind(PH1.auc,KM1.auc,RiskROC1.auc)
+ph2 <- rbind(PH2.auc,KM2.auc,RiskROC2.auc)
+ph3 <- rbind(PH3.auc,KM3.auc,RiskROC3.auc)
 
-p2 <- ggplot(ROC2_res, aes(x=1-specificity, y=sensitivity)) +
-  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
-  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
-  xlim(0,1) +
-  ylim(0,1) +
-  geom_abline(slope=1, linetype='dashed') +
-  labs(x=element_blank(),y=element_blank(), title='Normal-Exponential') +
-  theme(axis.text.y=element_blank(), legend.position='none')
+p1 <- ggplot(ph1, aes(x=time, y=AUC)) +
+  geom_line(linewidth = 1, aes(linetype=mode)) +
+  scale_linetype_manual(values=c('solid','dashed', 'dotdash'))+
+  ylim(0.5,1)+
+  labs(x='Time (years)',title='Exponential-Exponential')
 
-p3 <- ggplot(ROC3_res, aes(x=1-specificity, y=sensitivity)) +
-  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
-  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
-  xlim(0,1) +
-  ylim(0,1) +
-  geom_abline(slope=1, linetype='dashed') +
-  labs(x=element_blank(),y=element_blank(), title='Normal-Weibull', lty="Sample size:") +
-  theme(axis.text.y=element_blank(),legend.position=c(.85,0.2), legend.direction='vertical')
+p2 <- ggplot(ph2, aes(x=time, y=AUC)) +
+  geom_line(linewidth = 1, aes(linetype=mode)) +
+  scale_linetype_manual(values=c('solid','dashed', 'dotdash'))+
+  ylim(0.5,1)+
+  labs(x='Time (years)',title='Normal-Exponential')
 
-grid.arrange(p1,p2,p3,nrow=1,ncol=3,
-             top = textGrob("Time-dependent ROC with various sample size:\n PH model",gp=gpar(fontsize=20,font=3)),
-             bottom=textGrob("1-Specificity",gp=gpar(fontsize=20,font=3)),
-             left=textGrob("Sensitivity",gp=gpar(fontsize=20,font=3), rot=90))
+p3 <- ggplot(ph3, aes(x=time, y=AUC)) +
+  geom_line(linewidth = 1, aes(linetype=mode)) +
+  scale_linetype_manual(values=c('solid','dashed', 'dotdash'))+
+  ylim(0.5,1)+
+  labs(x='Time (years)',title='Normal-Weibull')
+
+grid.arrange(p1,p2,p3,nrow=3,ncol=1,
+             top = textGrob("Comparison of AUC trend:\n PH model",gp=gpar(fontsize=20,font=3)))
 
 # # ================
 # # ROC Copula model
 # # ================
-ROC1_resCOP <- ROC1_resCOP[-1,]
-ROC2_resCOP <- ROC2_resCOP[-1,]
-ROC3_resCOP <- ROC3_resCOP[-1,]
+cop1 <- rbind(COP1.auc,KM1.resauc,RiskROC1.resauc)
+cop2 <- rbind(COP2.auc,KM2.resauc,RiskROC2.resauc)
+cop3 <- rbind(COP3.auc,KM3.resauc,RiskROC3.resauc)
 
-p1 <- ggplot(ROC1_resCOP, aes(x=1-specificity, y=sensitivity)) +
-  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
-  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
-  xlim(0,1) +
-  ylim(0,1) +
-  geom_abline(slope=1, linetype='dashed') +
-  labs(x=element_blank(),y=element_blank(),title='Exponential-Exponential') +
-  theme(legend.position='none')
+p1 <- ggplot(cop1, aes(x=time, y=AUC)) +
+  geom_line(linewidth = 1, aes(linetype=mode)) +
+  scale_linetype_manual(values=c('dotted','solid', 'dotdash'))+
+  ylim(0.5,1)+
+  labs(x='Time (years)',title='Exponential-Exponential')
 
-p2 <- ggplot(ROC2_resCOP, aes(x=1-specificity, y=sensitivity)) +
-  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
-  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
-  xlim(0,1) +
-  ylim(0,1) +
-  geom_abline(slope=1, linetype='dashed') +
-  labs(x=element_blank(),y=element_blank(), title='Normal-Exponential') +
-  theme(axis.text.y=element_blank(), legend.position='none')
+p2 <- ggplot(cop2, aes(x=time, y=AUC)) +
+  geom_line(linewidth = 1, aes(linetype=mode)) +
+  scale_linetype_manual(values=c('dotted','solid', 'dotdash'))+
+  ylim(0.5,1)+
+  labs(x='Time (years)',title='Normal-Exponential')
 
-p3 <- ggplot(ROC3_resCOP, aes(x=1-specificity, y=sensitivity)) +
-  geom_line(linewidth=0.8, aes(linetype=as.factor(n.sam))) +
-  scale_linetype_manual(values=c("twodash","solid","dotdash","dotted")) +
-  xlim(0,1) +
-  ylim(0,1) +
-  geom_abline(slope=1, linetype='dashed') +
-  labs(x=element_blank(),y=element_blank(), title='Normal-Weibull', lty="Sample size:") +
-  theme(axis.text.y=element_blank(),legend.position=c(.85,0.2), legend.direction='vertical')
+p3 <- ggplot(cop3, aes(x=time, y=AUC)) +
+  geom_line(linewidth = 1, aes(linetype=mode)) +
+  scale_linetype_manual(values=c('dotted','solid', 'dotdash'))+
+  ylim(0.5,1)+
+  labs(x='Time (years)',title='Normal-Weibull')
 
-grid.arrange(p1,p2,p3,nrow=1,ncol=3,
-             top = textGrob("Time-dependent ROC with various sample size:\n Copula Function",gp=gpar(fontsize=20,font=3)),
-             bottom=textGrob("1-Specificity",gp=gpar(fontsize=20,font=3)),
-             left=textGrob("Sensitivity",gp=gpar(fontsize=20,font=3), rot=90))
+grid.arrange(p1,p2,p3,nrow=3,ncol=1,
+             top = textGrob("Comparison of AUC trend:\n Copula",gp=gpar(fontsize=20,font=3)))

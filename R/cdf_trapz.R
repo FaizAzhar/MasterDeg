@@ -7,6 +7,7 @@
 #' @param b An ending point value.
 #' @param n.pts A number of subdivisions of trapezoid shape under the curve.
 #' @returns A value.
+#' @export
 #' @examples
 #' f <- exp(-x^2)
 #' cdf_trapz(f=f, a=0, b=1, n.pts=15)

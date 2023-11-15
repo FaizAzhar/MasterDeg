@@ -11,8 +11,8 @@ MCMCestimate_PH(
   p.jags,
   i.jags,
   n.chains = 3,
-  n.iter = 50000,
-  n.thin = 1,
+  n.iter = 20000,
+  n.thin = 5,
   n.burnin = 2000
 )
 }

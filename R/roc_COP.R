@@ -17,6 +17,7 @@
 #'               mu.x: scale parameter of X\cr
 #'               sigma.x: standard deviation of X
 #' @param n.quant A number of how many quantile of Specificity that will be used in the ROC curve.
+#' @export
 #' @returns A dataframe of 4 columns (sensitivity, specificity, time, cutoff.x)
 #' @examples
 #' tau=0.5; theta=2*tau/(1-tau); n.quant=21; mu.x=1.4; lambda.t=0.2;

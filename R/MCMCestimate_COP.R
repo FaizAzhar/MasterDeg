@@ -25,6 +25,7 @@
 #' @param n.iter A number of iteration run for each chain.
 #' @param n.thin A number of iteration thinning.
 #' @param n.burnin A number that specify how many iteration will be discarded.
+#' @export
 #' @returns Print MCMC summary & automatically save the summary to the specified file path.
 #' @examples
 #' mu.x=5; sigma.x=0.8; shape.t=1.2; scale.t=1/1.4; tau=0.7; theta=2*tau/(1-tau)

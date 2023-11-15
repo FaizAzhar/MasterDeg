@@ -19,6 +19,7 @@
 #' @param n.sample A value of sample size that will be used in Monte Carlo Integration method (to find inverse of Specificity).
 #' @param cutoff.n A value of how many biomarker subdivision is used (to find inverse of Specificity).
 #' @param n.quant A number of how many quantile of Specificity that will be used in the ROC curve.
+#' @export
 #' @returns A dataframe of 4 columns (sensitivity, specificity, time, cutoff.x)
 #' @examples
 #' beta=1.2; n.quant=21; mu.x=1.4; lambda.t=0.2;

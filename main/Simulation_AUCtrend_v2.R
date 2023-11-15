@@ -125,37 +125,35 @@ colnames(AUC2_res) <- c('time','AUC','beta')
 colnames(AUC3_res) <- c('time','AUC','beta')
 
 # p1.add <- AUC1_res[which(AUC1_res$beta == 1.4),]
-p1 <- ggplot(AUC1_res[which(AUC1_res$beta == 0.8 | AUC1_res$beta == 1.4 | AUC1_res$beta == 2 | AUC1_res$beta == 4.6),],aes(x = time, y = AUC, linetype=as.factor(beta))) +
+p1 <- ggplot(AUC1_res[which(AUC1_res$beta == 0.8 | AUC1_res$beta == 1.4 | AUC1_res$beta == 2 | AUC1_res$beta == 5 | AUC1_res$beta == 5.7),],aes(x = time, y = AUC, linetype=as.factor(beta))) +
   geom_line(linewidth = 0.8) +
-  scale_linetype_manual(values=c("dashed","solid","dotdash","dotted")) +
+  scale_linetype_manual(values=c("dashed","solid","dotdash","dotted","longdash")) +
   ylim(0.65,1)+
-  labs(x=element_blank(), y=element_blank(), title='Exponential-Exponential (Scale = 1.4)', lty='Beta:') +
-  scale_x_discrete(labels=c("1"=parse(text = TeX('$T_{10}$')), "2"=parse(text = TeX('$T_{25}$')), "3"=parse(text = TeX('$T_{40}$')), "4"=parse(text = TeX('$T_{60}$')), "5"=parse(text = TeX('$T_{75}$')), "6"=parse(text = TeX('$T_{90}$')))) +
+  labs(x=element_blank(), y=element_blank(), title='Exponential-Exponential (Scale, mu = 1.4)', lty='Beta:') +
+  scale_x_discrete(limits=c("0.1","0.25","0.4","0.6","0.75","0.9")) +
   theme(legend.position=c(.965,0.6))
 
-p2.add <- AUC2_res[which(AUC2_res$beta == 5),]
-p2 <- ggplot(AUC2_res,aes(x = time, y = AUC2_res$AUC, group=as.factor(beta), color=as.factor(beta))) +
-  geom_line(linewidth = 0.5) +
-  geom_line(data=p2.add, aes(x = time, y = p2.add$AUC), color='red', size=1) +
-  scale_colour_viridis_d() +
+# p2.add <- AUC2_res[which(AUC2_res$beta == 5),]
+p2 <- ggplot(AUC2_res[which(AUC2_res$beta == 0.8 | AUC2_res$beta == 1.4 | AUC2_res$beta == 2 | AUC2_res$beta == 5 | AUC2_res$beta == 5.7),],aes(x = time, y = AUC, linetype=as.factor(beta))) +
+  geom_line(linewidth = 0.8) +
+  scale_linetype_manual(values=c("dashed","dotted","dotdash","solid","longdash")) +
   ylim(0.65,1)+
-  labs(x=element_blank(), y=element_blank(), title='Normal-Exponential', color='Beta') +
-  scale_x_discrete(labels=c(parse(text = TeX('$T_{10}$')), parse(text = TeX('$T_{25}$')), parse(text = TeX('$T_{40}$')), parse(text = TeX('$T_{60}$')), parse(text = TeX('$T_{75}$')), parse(text = TeX('$T_{90}$')))) +
+  labs(x=element_blank(), y=element_blank(), title='Normal-Exponential (Scale, mu = 5)', lty='Beta:') +
+  scale_x_discrete(limits=c("0.1","0.25","0.4","0.6","0.75","0.9")) +
   theme(legend.position=c(.965,0.6))
 
-p3.add <- AUC3_res[which(AUC3_res$beta == 5),]
-p3 <- ggplot(AUC3_res,aes(x = time, y = AUC3_res$AUC, group=as.factor(beta), color=as.factor(beta))) +
-  geom_line(linewidth = 0.5) +
-  geom_line(data=p3.add, aes(x = time, y = p3.add$AUC), color='red', size=1) +
-  scale_colour_viridis_d() +
+# p3.add <- AUC3_res[which(AUC3_res$beta == 5),]
+p3 <- ggplot(AUC3_res[which(AUC3_res$beta == 0.8 | AUC3_res$beta == 1.4 | AUC3_res$beta == 2 | AUC3_res$beta == 5 | AUC3_res$beta == 5.7),],aes(x = time, y = AUC, linetype=as.factor(beta))) +
+  geom_line(linewidth = 0.8) +
+  scale_linetype_manual(values=c("dashed","dotted","dotdash","solid","longdash")) +
   ylim(0.55,1)+
-  labs(x=element_blank(), y=element_blank(), title='Normal-Weibull', color='Beta') +
-  scale_x_discrete(labels=c(parse(text = TeX('$T_{10}$')), parse(text = TeX('$T_{25}$')), parse(text = TeX('$T_{40}$')), parse(text = TeX('$T_{60}$')), parse(text = TeX('$T_{75}$')), parse(text = TeX('$T_{90}$')))) +
+  labs(x=element_blank(), y=element_blank(), title='Normal-Weibull (Scale, mu = 5)', lty='Beta:') +
+  scale_x_discrete(limits=c("0.1","0.25","0.4","0.6","0.75","0.9")) +
   theme(legend.position=c(.965,0.6))
 
 grid.arrange(p1,p2,p3,nrow=3,ncol=1,
-             top = textGrob("AUC across time with various Beta\n but fixed Scale parameter",gp=gpar(fontsize=20,font=3)),
-             bottom=textGrob("Time",gp=gpar(fontsize=20,font=3)),
+             top = textGrob("AUC across time with various Beta\n but fixed biomarker scale parameter",gp=gpar(fontsize=20,font=3)),
+             bottom=textGrob("Time (percentile)",gp=gpar(fontsize=20,font=3)),
              left=textGrob("AUC",gp=gpar(fontsize=20,font=3), rot=90))
 
 # ===============
@@ -164,44 +162,41 @@ grid.arrange(p1,p2,p3,nrow=3,ncol=1,
 AUC1_resCOP <- AUC1_resCOP[-1,]
 AUC2_resCOP <- AUC2_resCOP[-1,]
 AUC3_resCOP <- AUC3_resCOP[-1,]
-AUC1_resCOP[,1] <- rep(c("t1","t2","t3","t4","t5","t6"),10)
-AUC2_resCOP[,1] <- rep(c("t1","t2","t3","t4","t5","t6"),10)
-AUC3_resCOP[,1] <- rep(c("t1","t2","t3","t4","t5","t6"),10)
+AUC1_resCOP[,1] <- rep(c(1,2,3,4,5,6),10)
+AUC2_resCOP[,1] <- rep(c(1,2,3,4,5,6),10)
+AUC3_resCOP[,1] <- rep(c(1,2,3,4,5,6),10)
 colnames(AUC1_resCOP) <- c('time','AUC','tau')
 colnames(AUC2_resCOP) <- c('time','AUC','tau')
 colnames(AUC3_resCOP) <- c('time','AUC','tau')
 
-p1.add <- AUC1_resCOP[which(AUC1_resCOP$tau == 0.4117647059),]
-p1 <- ggplot(AUC1_resCOP,aes(x = time, y = AUC, group=as.factor(round(tau,1)), color=as.factor(round(tau,1)))) +
-  geom_line(linewidth = 0.5) +
-  geom_line(data=p1.add, aes(x = time, y = AUC), color='red', size=1) +
-  scale_colour_viridis_d() +
+# p1.add <- AUC1_resCOP[which(AUC1_resCOP$tau == 0.4117647059),]
+p1 <- ggplot(AUC1_resCOP[which(AUC1_resCOP$tau == 0.2 | AUC1_resCOP$tau == 0.4117647059 | AUC1_resCOP$tau == 0.5 | AUC1_resCOP$tau == 0.7142857143 | AUC1_resCOP$tau == 0.9),],aes(x = time, y = AUC, linetype=as.factor(round(tau,2)))) +
+  geom_line(linewidth = 0.8) +
+  scale_linetype_manual(values=c("dashed","solid","dotdash","dotted","longdash")) +
   ylim(0.5,1)+
-  labs(x=element_blank(), y=element_blank(), title='Exponential-Exponential', color='Tau') +
-  scale_x_discrete(labels=c(parse(text = TeX('$T_{10}$')), parse(text = TeX('$T_{25}$')), parse(text = TeX('$T_{40}$')), parse(text = TeX('$T_{60}$')), parse(text = TeX('$T_{75}$')), parse(text = TeX('$T_{90}$')))) +
+  labs(x=element_blank(), y=element_blank(), title='Exponential-Exponential (Scale, mu = 1.4)', lty='Tau:') +
+  scale_x_discrete(limits=c("0.1","0.25","0.4","0.6","0.75","0.9")) +
   theme(legend.position=c(.965,0.6))
 
-p2.add <- AUC2_resCOP[which(AUC2_resCOP$tau == 0.7142857143),]
-p2 <- ggplot(AUC2_resCOP,aes(x = time, y = AUC, group=as.factor(round(tau,1)), color=as.factor(round(tau,1)))) +
-  geom_line(linewidth = 0.5) +
-  geom_line(data=p2.add, aes(x = time, y = AUC), color='red', size=1) +
-  scale_colour_viridis_d() +
+# p2.add <- AUC2_resCOP[which(AUC2_resCOP$tau == 0.7142857143),]
+p2 <- ggplot(AUC2_resCOP[which(AUC2_resCOP$tau == 0.2 | AUC2_resCOP$tau == 0.4117647059 | AUC2_resCOP$tau == 0.5 | AUC2_resCOP$tau == 0.7142857143 | AUC2_resCOP$tau == 0.9),],aes(x = time, y = AUC, linetype=as.factor(round(tau,2)))) +
+  geom_line(linewidth = 0.8) +
+  scale_linetype_manual(values=c("dashed","dotted","dotdash","solid","longdash")) +
   ylim(0.5,1)+
-  labs(x=element_blank(), y=element_blank(), title='Normal-Exponential', color='Tau') +
-  scale_x_discrete(labels=c(parse(text = TeX('$T_{10}$')), parse(text = TeX('$T_{25}$')), parse(text = TeX('$T_{40}$')), parse(text = TeX('$T_{60}$')), parse(text = TeX('$T_{75}$')), parse(text = TeX('$T_{90}$')))) +
+  labs(x=element_blank(), y=element_blank(), title='Normal-Exponential (Scale, mu = 5)', lty='Tau:') +
+  scale_x_discrete(limits=c("0.1","0.25","0.4","0.6","0.75","0.9")) +
   theme(legend.position=c(.965,0.6))
 
-p3.add <- AUC3_resCOP[which(AUC3_resCOP$tau == 0.7142857143),]
-p3 <- ggplot(AUC3_resCOP,aes(x = time, y = AUC, group=as.factor(round(tau,1)), color=as.factor(round(tau,1)))) +
-  geom_line(linewidth = 0.5) +
-  geom_line(data=p3.add, aes(x = time, y = AUC), color='red', size=1) +
-  scale_colour_viridis_d() +
+# p3.add <- AUC3_resCOP[which(AUC3_resCOP$tau == 0.7142857143),]
+p3 <- ggplot(AUC2_resCOP[which(AUC3_resCOP$tau == 0.2 | AUC3_resCOP$tau == 0.4117647059 | AUC3_resCOP$tau == 0.5 | AUC3_resCOP$tau == 0.7142857143 | AUC3_resCOP$tau == 0.9),],aes(x = time, y = AUC, linetype=as.factor(round(tau,2)))) +
+  geom_line(linewidth = 0.8) +
+  scale_linetype_manual(values=c("dashed","dotted","dotdash","solid","longdash")) +
   ylim(0.5,1)+
-  labs(x=element_blank(), y=element_blank(), title='Normal-Weibull', color='Tau') +
-  scale_x_discrete(labels=c(parse(text = TeX('$T_{10}$')), parse(text = TeX('$T_{25}$')), parse(text = TeX('$T_{40}$')), parse(text = TeX('$T_{60}$')), parse(text = TeX('$T_{75}$')), parse(text = TeX('$T_{90}$')))) +
+  labs(x=element_blank(), y=element_blank(), title='Normal-Weibull (Scale, mu = 5)', lty='Tau:') +
+  scale_x_discrete(limits=c("0.1","0.25","0.4","0.6","0.75","0.9")) +
   theme(legend.position=c(.965,0.6))
 
 grid.arrange(p1,p2,p3,nrow=3,ncol=1,
-             top = textGrob("AUC across time with various Kendall's Tau\n but fixed Scale parameter",gp=gpar(fontsize=20,font=3)),
-             bottom=textGrob("Time",gp=gpar(fontsize=20,font=3)),
+             top = textGrob("AUC across time with various Kendall's Tau\n but fixed biomarker scale",gp=gpar(fontsize=20,font=3)),
+             bottom=textGrob("Time (percentile)",gp=gpar(fontsize=20,font=3)),
              left=textGrob("AUC",gp=gpar(fontsize=20,font=3), rot=90))
