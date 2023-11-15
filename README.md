@@ -7,7 +7,13 @@ The research conducted to find new approach for producing the time-dependent ROC
 In focus, parametric approaches are used to achieve the objective for this study.
 
 Parametric hazard function and copula function are investigated for this research.
-
-The created R package is created to run the simulation studies which is written in the 'main' folder
-
 This study is part of the project funded by the University of Technology, Malaysia.
+
+## Journal Paper:
+[Link will be updated]
+
+## To run the simulation study, please:
+1. install package to R using devtools::install_github('FaizAzhar/MasterDeg')
+2. copy & paste the R code provided at the end of the journal paper
+
+
