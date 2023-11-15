@@ -13,7 +13,7 @@ This study is part of the project funded by the University of Technology, Malays
 [Link will be updated]
 
 ## To run the simulation study, please:
-1. Install package to R using devtools::install_github('FaizAzhar/MasterDeg')
+1. Install package to R using devtools::install_github('FaizAzhar/MasterDeg') or clone this repo into your local machine.
 2. Copy & run the R code provided at the end of the journal paper.
-3. Or can use the 'main' folder and run all R scripts store in the folde.
+3. Or can use the 'main' folder and run all R scripts store in the folder.
 
