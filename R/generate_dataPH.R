@@ -25,7 +25,8 @@
 
 generate_dataPH <- function(mod,params,n.sample){
   mu.x <- params$mu.x; lambda.t <- params$lambda.t; beta <- params$beta; c.rate <- params$c.rate;
-  sigma.x <- params$sigma.x; shape.t <- params$shape.t; scale.t <- params$scale.t
+  sigma.x <- params$sigma.x; shape.t <- params$shape.t; scale.t <- params$scale.t;
+  skew.x <- params$skew.x; skew.t <- params$skew.t; mu.t <- params$mu.t; sigma.t <- params$sigma.t
   c <- rep(NA,n.sample)
 
   if(mod == 'exp_exp'){
@@ -59,6 +60,24 @@ generate_dataPH <- function(mod,params,n.sample){
     #censoring data
     for(i in 1:n.sample){c[i] <- runif(1,0,gamma(1+1/shape.t)/((exp(x[i]*beta)^(1/shape.t))*scale.t*c.rate))}
 
+    # setting observable time-to-event
+    t <- ifelse(t.true < c, t.true,c)
+    status <- ifelse(t.true < c, 1,0)
+    simdata <- data.frame(x=x,t=t,status=status)
+  }
+  else if(mod == 'snorm_snorm'){
+    x <- rsn(n.sample,xi = mu.x,omega = sigma.x,alpha = skew.x)
+    u <- runif(n.sample)
+    t.true <- qsn(1 - exp(log(u)/exp(x*beta)), xi=mu.t, omega = sigma.t, alpha = skew.t)
+
+    #censoring data
+    v <- rsn(100000,xi = mu.t, omega = sigma.t, alpha = skew.t)
+    const.S <- 1-psn(v,xi = mu.t, omega = sigma.t, alpha = skew.t)
+    for(i in 1:n.sample){
+      monte.carlo <- v*(const.S^(exp(beta*x[i])-1))
+      lim <- exp(beta*x[i])/c.rate * mean(monte.carlo)
+      c[i] <- runif(1,0,lim)
+    }
     # setting observable time-to-event
     t <- ifelse(t.true < c, t.true,c)
     status <- ifelse(t.true < c, 1,0)

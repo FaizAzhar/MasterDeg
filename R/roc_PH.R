@@ -29,13 +29,17 @@
 
 
 
-roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.quant=10){
+roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.quant=10, low.lim=NULL, upp.lim=NULL){
 
   # allocating memory & seed
   lambda.t = params$lambda.t; mu.x = params$mu.x; beta = params$beta;
-  sigma.x = params$sigma.x; shape.t = params$shape.t; scale.t = params$scale.t
+  sigma.x = params$sigma.x; shape.t = params$shape.t; scale.t = params$scale.t;
+  skew.x = params$skew.x; mu.t = params$mu.t; sigma.t = params$sigma.t; skew.t = params$skew.t
+  mu.sn = params$mu.sn; sigma.sn = params$sigma.sn; skew.sn = params$skew.sn
   denom.se <- rep(NA,length(time.t)); denom.fpr <- rep(NA,length(time.t))
-  ans <- data.frame('sensitivity'=rep(NA,n.quant*length(time.t)),
+
+  if(mod!="snorm_snorm"){
+    ans <- data.frame('sensitivity'=rep(NA,n.quant*length(time.t)),
                     'specificity'=rep(seq(0,1,length.out=n.quant),length(time.t)),
                     'time'=sort(rep(time.t,n.quant)),
                     'cutoff.x'=rep(NA,n.quant*length(time.t)))
@@ -46,6 +50,7 @@ roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.qu
   pb.overall <- txtProgressBar(min=0,max=1,
                                style=3, width=50, char="*")
   set.seed(12345)
+  }
 
   if(mod=='exp_exp'){
     # calculating denominator of Sensitivity
@@ -234,10 +239,63 @@ roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.qu
     cat("\n")
     print(Sys.time()-start.time)
   }
-  ans$sensitivity[which(ans$sensitivity>1)] <- 1
-  for(i in 1:length(time.t)){
-    ans[n.quant*(i-1)+1,] <- c(1,0,time.t[i],NA,NA,NA,NA)
-    ans[n.quant*i,] <- c(0,1,time.t[i],NA,NA,NA,NA)
+  else if(mod=='snorm_snorm'){
+    # calculating denominator of Sensitivity
+    ans <- data.frame('sensitivity'=rep(NA,n.quant*length(time.t)),
+                      'specificity'=rep(NA,n.quant*length(time.t)),
+                      'time'=sort(rep(time.t,n.quant)),
+                      'cutoff.x'=rep(seq(0,max.x,length.out=n.quant),length(time.t)))
+
+    denom.se <- NULL
+    f.joint <- function(vars){
+    x <- vars[1]
+    t.T <- vars[2]
+    exp(x*beta)*((1-psn(t.T, xi=mu.t, omega=sigma.t, alpha=skew.t))^(exp(x*beta)-1))*dsn(t.T, xi=mu.t, omega=sigma.t, alpha=skew.t)*dsn(x, xi=mu.x, omega=sigma.x, alpha=skew.x)
+    }
+
+    for (i in 1:length(time.t)){
+      double.integ <- hcubature(f.joint, lowerLimit=c(low.lim[1],low.lim[2]), upperLimit=c(upp.lim[1],time.t[i]))$integral
+      res <- rep(double.integ, n.quant)
+      denom.se <- append(denom.se, res)
+    }
+
+    # calculating denominator of Specificity
+    ans$denom.se <- denom.se
+    ans$denom.sp <- 1-ans$denom.se
+
+    # calculating Specificity's numerator
+    numer.sp <- NULL
+    for (i in 1:nrow(ans)){
+      double.integ <- hcubature(f.joint, c(low.lim[1],ans$time[i]), c(ans$cutoff.x[i],upp.lim[2]))$integral
+      numer.sp <- append(numer.sp, double.integ)
+      print(paste0("Calculating Specificity's numerator: iter = ",i))
+    }
+    ans$numer.sp <- numer.sp
+
+    # calculating Sensitivity's numerator
+    numer.se <- NULL
+    for (i in 1:nrow(ans)){
+      double.integ <- hcubature(f.joint, c(ans$cutoff.x[i],low.lim[2]), c(upp.lim[1],ans$time[i]))$integral
+      numer.se <- append(numer.se, double.integ)
+      print(paste0("Calculating Sensitivity's numerator: iter = ",i))
+    }
+    ans$numer.se <- numer.se
+
+    ans$sensitivity <- ans$numer.se / ans$denom.se
+    ans$specificity <- ans$numer.sp / ans$denom.sp
+  }
+  if(mod!="snorm_snorm"){
+    ans$sensitivity[which(ans$sensitivity>1)] <- 1
+    for(i in 1:length(time.t)){
+      ans[n.quant*(i-1)+1,] <- c(1,0,time.t[i],NA,NA,NA,NA)
+      ans[n.quant*i,] <- c(0,1,time.t[i],NA,NA,NA,NA)
+    }
+  }else{
+    ans$sensitivity[which(ans$sensitivity>1)] <- 1
+    for(i in 1:length(time.t)){
+      ans <- add_row(ans,sensitivity=1,specificity=0,time=time.t[i],cutoff.x=NA,denom.se=NA,denom.sp=NA,numer.sp=NA,numer.se=NA,.before=(n.quant*(i-1)+2*i-1))
+      ans <- add_row(ans,sensitivity=0,specificity=1,time=time.t[i],cutoff.x=NA,denom.se=NA,denom.sp=NA,numer.sp=NA,numer.se=NA,.before=(n.quant*(i)+2*i))
+    }
   }
   ans <- ans[,c(1,2,3,4)]
   return(ans)

@@ -36,7 +36,7 @@
 
 
 
-MCMCestimate_PH <- function(model, df, f.path, p.jags, i.jags, n.chains=3,
+MCMCestimate_PH <- function(model, df, f.path, p.jags=NULL, i.jags=NULL, n.chains=3,
                              n.iter=20000, n.thin=5, n.burnin=2000){
   n <- nrow(df)
   t <- df$t # time column
@@ -118,25 +118,69 @@ MCMCestimate_PH <- function(model, df, f.path, p.jags, i.jags, n.chains=3,
     model.file = file.path(f.path,"model.txt")
     write.model(mod,model.file)
   }
+  else if(model == 'snorm_snorm'){
+    mod.stan =
+      "
+      data {
+        int<lower=0> n; // no. of obs
+        real X[n]; // marker value
+        real Time[n]; // time-to-event
+        real<lower=0> delta[n]; // status (0=censor, 1=not censor)
+      }
 
-  jmod <- jags(model=model.file, data=d.jags, n.chains=n.chains, inits=i.jags,
+      parameters {
+        real muX;
+        real<lower=0> sigmaX;
+        real skewX;
+        real beta;
+        real muT;
+        real<lower=0> sigmaT;
+        real skewT;
+      }
+
+      model {
+        beta~normal(0,3);
+        muX~normal(0,3);
+        skewX ~ normal(0,3);
+        sigmaX ~ gamma(0.5,0.5);
+        muT~normal(0,3);
+        skewT ~ normal(0,3);
+        sigmaT ~ gamma(0.5,0.5);
+        //X ~ skew_normal(muX, sigmaX, skewX);
+        //Time ~ skew_normal(muT, sigmaT, skewT);
+        for(i in 1:n)
+         target += delta[i]*((beta*X[i]) + (exp(beta*X[i])-1)*skew_normal_lccdf(Time[i]| muT, sigmaT, skewT) + skew_normal_lpdf(Time[i] | muT, sigmaT, skewT) + skew_normal_lpdf(X[i] | muX, sigmaX, skewX)) + (1-delta[i])*(exp(beta*X[i])*skew_normal_lccdf(Time[i]| muT, sigmaT, skewT));
+      }
+      "
+    model.file = file.path(f.path, "model.stan")
+    write(mod.stan, model.file)
+  }
+
+  if(model != "snorm_snorm"){
+   jmod <- jags(model=model.file, data=d.jags, n.chains=n.chains, inits=i.jags,
                parameters.to.save=p.jags, n.iter=n.iter, n.thin=n.thin, n.burnin=n.burnin)
   print(jmod,intervals=c(0.025,0.975),digits=4)
   jmod.mcmc <- as.mcmc(jmod)
   print(gelman.diag(jmod.mcmc))
+  }else{
+    fit <- stan(file = model.file, data = d.jags, chains=n.chains, iter=n.iter, warmup=n.burnin)
+    saveRDS(fit, "snorm_snorm.rds")
+    print(fit)
+    }
+
 
   if(model == 'exp_exp'){
-    write.table(MCMCsummary(jmod.mcmc,round=4),file=file.path(f.path,"Simulation_result","MCMC_ph_expo_expo_result.txt"))
+    write.table(MCMCsummary(jmod.mcmc,round=4),file=file.path(f.path,"MCMC_ph_expo_expo_result.txt"))
     MCMCtrace(jmod.mcmc,params=p.jags,ISB=F,exact=T,pdf=T, filename='MCMC_ph_expo_expo_traceplot.pdf',
               open_pdf=F)
   }
   else if(model == 'norm_exp'){
-    write.table(MCMCsummary(jmod.mcmc,round=4),file.path(f.path,'Simulation_result','MCMC_ph_norm_expo_result.txt'))
+    write.table(MCMCsummary(jmod.mcmc,round=4),file.path(f.path,'MCMC_ph_norm_expo_result.txt'))
     MCMCtrace(jmod.mcmc,params=p.jags,ISB=F,exact=T,pdf=T, filename='MCMC_ph_norm_expo_traceplot.pdf',
               open_pdf=F)
   }
   else if(model == 'norm_weib'){
-    write.table(MCMCsummary(jmod.mcmc,round=4),file.path(f.path,'Simulation_result','MCMC_ph_norm_weib_result.txt'))
+    write.table(MCMCsummary(jmod.mcmc,round=4),file.path(f.path,'MCMC_ph_norm_weib_result.txt'))
     MCMCtrace(jmod.mcmc,params=p.jags,ISB=F,exact=T,pdf=T, filename='MCMC_ph_norm_weib_traceplot.pdf',
               open_pdf=F)
   }
