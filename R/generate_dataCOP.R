@@ -27,6 +27,7 @@ generate_dataCOP <- function(mod, params, n.sample){
   mu.x <- params$mu.x; lambda.t <- params$lambda.t; theta <- params$theta; c.rate <- params$c.rate;
   sigma.x <- params$sigma.x;
   shape.t <- params$shape.t; scale.t <- params$scale.t;
+  mu.t <- params$mu.t; sigma.t <- params$sigma.t; skew.x <- params$skew.x; skew.t <- params$skew.t
 
   if(mod == 'exp_exp'){
     clay.cop <- rotCopula(archmCopula(family='clayton',dim=2,param=theta), flip=c(T,F)) # rotate 90 clayton
@@ -74,6 +75,26 @@ generate_dataCOP <- function(mod, params, n.sample){
 
     # 0.2 censoring rate
     c <- runif(n.sample,0,gamma(1/shape.t+1)/(c.rate/scale.t))
+
+    # setting observable time-to-event
+    t.true <- simdata$t
+    t <- ifelse(t.true < c, t.true,c)
+    status <- ifelse(t.true < c, 1,0)
+
+    simdata <- data.frame(x=simdata$x,t=t,status=status)
+  }
+
+  else if(mod == 'snorm_snorm'){
+    clay.cop <- rotCopula(archmCopula(family='clayton',dim=2,param=theta), flip=c(T,F)) # rotate 90 clayton
+    clay.dist <- mvdc(copula=clay.cop, margins=c('sn','sn'),
+                      paramMargins=list(list(xi=mu.x,omega=sigma.x,alpha=skew.x),list(xi=mu.t,omega=sigma.t, alpha=skew.t)))
+
+    simdata <- as.data.frame(rMvdc(n.sample, clay.dist))
+    colnames(simdata) <- c('x','t')
+
+    # 0.2 censoring rate
+    v <- rsn(100000, xi = mu.t, omega = sigma.t, alpha = skew.t)
+    c <- runif(n.sample,0,mean(v)/c.rate)
 
     # setting observable time-to-event
     t.true <- simdata$t
