@@ -248,13 +248,13 @@ roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.qu
 
     denom.se <- NULL
     f.joint <- function(vars){
-    x <- vars[1]
-    t.T <- vars[2]
+    x <- vars[2]
+    t.T <- vars[1]
     exp(x*beta)*((1-psn(t.T, xi=mu.t, omega=sigma.t, alpha=skew.t))^(exp(x*beta)-1))*dsn(t.T, xi=mu.t, omega=sigma.t, alpha=skew.t)*dsn(x, xi=mu.x, omega=sigma.x, alpha=skew.x)
     }
 
     for (i in 1:length(time.t)){
-      double.integ <- hcubature(f.joint, lowerLimit=c(low.lim[1],low.lim[2]), upperLimit=c(upp.lim[1],time.t[i]))$integral
+      double.integ <- hcubature(f.joint, lowerLimit=c(low.lim[1],low.lim[2]), upperLimit=c(time.t[i],upp.lim[2]))$integral
       res <- rep(double.integ, n.quant)
       denom.se <- append(denom.se, res)
     }
@@ -266,7 +266,7 @@ roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.qu
     # calculating Specificity's numerator
     numer.sp <- NULL
     for (i in 1:nrow(ans)){
-      double.integ <- hcubature(f.joint, c(low.lim[1],ans$time[i]), c(ans$cutoff.x[i],upp.lim[2]))$integral
+      double.integ <- hcubature(f.joint, c(ans$time[i],low.lim[2]), c(upp.lim[1],ans$cutoff.x[i]))$integral
       numer.sp <- append(numer.sp, double.integ)
       print(paste0("Calculating Specificity's numerator: iter = ",i))
     }
@@ -275,7 +275,7 @@ roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.qu
     # calculating Sensitivity's numerator
     numer.se <- NULL
     for (i in 1:nrow(ans)){
-      double.integ <- hcubature(f.joint, c(ans$cutoff.x[i],low.lim[2]), c(upp.lim[1],ans$time[i]))$integral
+      double.integ <- hcubature(f.joint, c(low.lim[1],ans$cutoff.x[i]), c(ans$time[i],upp.lim[2]))$integral
       numer.se <- append(numer.se, double.integ)
       print(paste0("Calculating Sensitivity's numerator: iter = ",i))
     }
