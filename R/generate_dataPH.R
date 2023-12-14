@@ -69,19 +69,23 @@ generate_dataPH <- function(mod,params,n.sample){
     x <- rsn(n.sample,xi = mu.x,omega = sigma.x,alpha = skew.x)
     u <- runif(n.sample)
     t.true <- qsn(1 - exp(log(u)/exp(x*beta)), xi=mu.t, omega = sigma.t, alpha = skew.t)
+    status <- rep(1,n.sample)
 
     #censoring data
-    v <- rsn(100000,xi = mu.t, omega = sigma.t, alpha = skew.t)
-    const.S <- 1-psn(v,xi = mu.t, omega = sigma.t, alpha = skew.t)
-    for(i in 1:n.sample){
-      monte.carlo <- v*(const.S^(exp(beta*x[i])-1))
-      lim <- exp(beta*x[i])/c.rate * mean(monte.carlo)
-      c[i] <- runif(1,0,lim)
-    }
-    # setting observable time-to-event
-    t <- ifelse(t.true < c, t.true,c)
-    status <- ifelse(t.true < c, 1,0)
-    simdata <- data.frame(x=x,t=t,status=status)
+    tot.c <- floor(c.rate*n.sample)
+    c.time <- sample(1:n.sample, tot.c)
+    status[c.time] <- 0
+
+    # for(i in 1:n.sample){
+    #   x.obs <- x[i]
+    #   int.func <- function(t){(t) * (1-psn(t, xi=mu.t, omega=sigma.t, alpha=skew.t))^(exp(beta*x.obs)-1) * dsn(t, xi=mu.t, omega=sigma.t, alpha=skew.t)}
+    #   res <- hcubature(int.func,min(t.true)-1,max(t.true)+1)$integral
+    #   lim <- exp(beta*x.obs)/c.rate * res
+    #   c[i] <- runif(1,0,lim)
+    #   result[i] <- lim
+    # }
+
+    simdata <- data.frame(x=x,t=t.true,status=status)
   }
   return(simdata)
 }

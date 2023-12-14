@@ -29,7 +29,7 @@
 
 
 
-roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.quant=10, low.lim=NULL, upp.lim=NULL){
+roc_PH <- function(max.x, min.x=NULL, time.t,mod,params,n.sample=100000, cutoff.n=10001, n.quant=10, low.lim=NULL, upp.lim=NULL){
 
   # allocating memory & seed
   lambda.t = params$lambda.t; mu.x = params$mu.x; beta = params$beta;
@@ -244,7 +244,7 @@ roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.qu
     ans <- data.frame('sensitivity'=rep(NA,n.quant*length(time.t)),
                       'specificity'=rep(NA,n.quant*length(time.t)),
                       'time'=sort(rep(time.t,n.quant)),
-                      'cutoff.x'=rep(seq(0,max.x,length.out=n.quant),length(time.t)))
+                      'cutoff.x'=rep(seq(min.x,max.x,length.out=n.quant),length(time.t)))
 
     denom.se <- NULL
     f.joint <- function(vars){
@@ -297,6 +297,6 @@ roc_PH <- function(max.x,time.t,mod,params,n.sample=100000, cutoff.n=10001, n.qu
       ans <- add_row(ans,sensitivity=0,specificity=1,time=time.t[i],cutoff.x=NA,denom.se=NA,denom.sp=NA,numer.sp=NA,numer.se=NA,.before=(n.quant*(i)+2*i))
     }
   }
-  ans <- ans[,c(1,2,3,4)]
+  # ans <- ans[,c(1,2,3,4)]
   return(ans)
 }
