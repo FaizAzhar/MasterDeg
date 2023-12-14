@@ -6,6 +6,7 @@
 \usage{
 roc_PH(
   max.x,
+  min.x = NULL,
   time.t,
   mod,
   params,
